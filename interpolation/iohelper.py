@@ -261,3 +261,14 @@ class Writer:
                      + str(csv_converter.hum_values[-1]) + ']}\n')
         output.write("]}\n]")
         output.close()
+
+        # write statistical quality analysis results to csv
+        def write_quality_test_to_csv(self, mae, mse, rmse, mare, r2, num_of_known, num_of_query):
+            self.output_name += '.csv'
+            csv_output = open(self.output_name, 'w')
+            csv_output.write('iteration;num_known;num_query;MAE;MSE;RMSE;MARE;R^2\n')
+            for index in range(len(mae)):
+                csv_output.write(str(index) + ';' + str(num_of_known[index]) + ';' + str(num_of_query[index]) + ';' +
+                                 str(mae[index]) + ';' + str(mse[index]) + ';' + str(rmse[index]) + ';' +
+                                 str(mare[index]) + ';' + str(r2[index]) + '\n')
+            csv_output.close()
