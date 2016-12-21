@@ -1,6 +1,4 @@
 # CsvConverter converts all input data into format suitable for the json output of initial dataset
-
-
 from dateutil import parser
 
 

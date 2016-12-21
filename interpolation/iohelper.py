@@ -136,31 +136,8 @@ class Writer:
         output.write("}\n]")
         output.close()
 
-    def write_initial_to_json(self, analysis, times, points, values):
-        output = open(self.output_name, 'w')
-        output.write('[')
-        output.write('{\n'
-                     '"lat_max":"' + str(analysis.lat_max) + '",\n'
-                     '"lat_min":"' + str(analysis.lat_min) + '",\n'
-                     '"lon_max":"' + str(analysis.lon_max) + '",\n'
-                     '"lon_min":"' + str(analysis.lon_min) + '",\n'
-                     '"alt_max":"' + str(analysis.alt_max) + '",\n'
-                     '"alt_min":"' + str(analysis.alt_min) + '",\n'
-                     '"time_max":"' + str(times[-1]) + '",\n'
-                     '"time_min":"' + str(times[0]) + '",\n'
-                     '"value_max":"' + str(analysis.value_max) + '",\n'
-                     '"value_min":"' + str(analysis.value_min) + '"\n'
-                     '},'
-                     '\n'
-                     '{\n"0":[')
-        for i in range(len(values) - 2):
-            output.write('{"coords":' + str(points[i]) + ','
-                         ' "val":"' + str(values[i]) + '"},\n')
-        output.write('{"coordinates":' + str(points[-1]) + ', "value":"' + str(values[-1]) + '"}]\n')
-        output.write("}\n]")
-        output.close()
-
     # write one of the phenomena of the initial csv to json without analysis
+    # value_index 0 - temperature, 1 - pressure, any other - humidity
     def initial_to_json_1phenomena(self, csv_converter, value_index):
 
         coos = 'WGS84'
@@ -200,8 +177,8 @@ class Writer:
                      '"lon_min":"' + str(csv_converter.lon_min) + '",\n'
                      '"alt_max":"' + str(csv_converter.alt_max) + '",\n'
                      '"alt_min":"' + str(csv_converter.alt_min) + '",\n'
-                     '"time_max":"' + str(csv_converter.times[-1]) + '",\n'
-                     '"time_min":"' + str(csv_converter.times[0]) + '",\n'
+                     '"time_max":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(csv_converter.times[-1]) + '",\n'
+                     '"time_min":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(csv_converter.times[0]) + '",\n'
                      '"value_max":"' + str(value_max) + '",\n'
                      '"value_min":"' + str(value_min) + '"\n'
                      '}},'
