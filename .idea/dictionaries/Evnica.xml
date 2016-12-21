@@ -2,6 +2,7 @@
   <dictionary name="Evnica">
     <words>
       <w>coords</w>
+      <w>dataset</w>
     </words>
   </dictionary>
 </component>
