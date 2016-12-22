@@ -1,5 +1,4 @@
 import plotly
-import plotly.plotly as pl
 import plotly.graph_objs as go
 import numpy
 from interpolation.csvconverter import CsvConverter

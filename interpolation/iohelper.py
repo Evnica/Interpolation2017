@@ -1,4 +1,5 @@
 from dateutil import parser
+import numpy
 
 
 class Reader:
@@ -37,6 +38,10 @@ class Reader:
         lon_values = []
         alt_values = []
 
+        potential_duplicate_lat = -1
+        potential_duplicate_lon = -1
+        potential_duplicate_alt = -1
+
         for line in file:
             i += 1
             line_content = line.split(';')
@@ -50,11 +55,17 @@ class Reader:
                         current_lon = float(line_content[lon_index].replace(",", "."))
                         current_alt = float(line_content[alt_index].replace(",", "."))
                         current_value = float(line_content[value_index].replace(",", "."))
-                        lat_values.append(current_lat)
-                        lon_values.append(current_lon)
-                        alt_values.append(current_alt)
-                        values.append(current_value)
-                        times.append(parser.parse(line_content[time_index]))
+
+                        if potential_duplicate_lat != current_lat and \
+                           potential_duplicate_lon != current_lon and potential_duplicate_alt != current_alt:
+                            potential_duplicate_lat = current_lat
+                            potential_duplicate_lon = current_lon
+                            potential_duplicate_alt = current_alt
+                            lat_values.append(current_lat)
+                            lon_values.append(current_lon)
+                            alt_values.append(current_alt)
+                            values.append(current_value)
+                            times.append(parser.parse(line_content[time_index]))
                 except ValueError:
                     j += 1
                     "Not all necessary values present in line " + str(i)

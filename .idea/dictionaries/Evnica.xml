@@ -3,7 +3,10 @@
     <words>
       <w>coords</w>
       <w>dataset</w>
+      <w>interpolator</w>
+      <w>multiquadric</w>
       <w>rmse</w>
+      <w>sqrt</w>
     </words>
   </dictionary>
 </component>

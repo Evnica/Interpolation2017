@@ -1,4 +1,5 @@
 from enum import Enum
+from scipy.interpolate import Rbf
 from scipy.spatial import KDTree
 import numpy
 
@@ -8,6 +9,29 @@ class InterpolationMethod(Enum):
     idw_st = 'Spatio-Temporal IDW'
     rbf = 'Radial Basis Functions (RBFs)'
     rbf_st = 'Spatio-Temporal RBFs'
+
+
+class RadialBasisFunctions(Enum):
+    multiquadric = 'multiquadric'  # sqrt((r / self.epsilon) ** 2 + 1)
+    inverse = 'inverse'  # 1.0 / sqrt((r / self.epsilon) ** 2 + 1)
+    gaussian = 'gaussian'  # : exp(-(r / self.epsilon) ** 2)
+    cubic = 'cubic'  # r ** 3
+    quintic = 'quintic'  # r ** 5
+    thin_plate = 'thin_plate'  # r ** 2 * log(r)
+
+
+class RbfInterpolator:
+    def __init__(self, points, values, target_grid, epsilon, rbf_type, smooth):
+        lat_values = [point[0] for point in points]
+        lon_values = [point[1] for point in points]
+        alt_values = [point[2] for point in points]
+
+        target_lat_values = [point[0] for point in target_grid]
+        target_lon_values = [point[1] for point in target_grid]
+        target_alt_values = [point[2] for point in target_grid]
+
+        self.rbf = Rbf(lat_values, lon_values, alt_values, values, epsilon=epsilon, function=rbf_type, smooth=smooth)
+        self.interpolated_values = self.rbf(target_lat_values, target_lon_values, target_alt_values)
 
 
 class InverseDistanceWeighting:
@@ -67,5 +91,3 @@ class InverseDistanceWeighting:
             interpolation[i] = weighted_value
             i += 1
         return interpolation
-
-

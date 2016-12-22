@@ -6,25 +6,18 @@ from interpolation.analysis import Analysis
 from interpolation.utils import divide_in_random
 from interpolation.interpolator import InverseDistanceWeighting
 
-"""points1 = [[100, 110, 120], [200, 210, 220], [300, 310, 320], [400, 410, 420], [500, 510, 520],
-           [600, 610, 620], [700, 710, 720], [800, 810, 820], [900, 910, 920], [909, 919, 929]]
-values1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-times1 = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 9009]"""
 
 analysis = Analysis(None, 10)
 reader = Reader('input/wetter.csv')
 # (lat_index, lon_index, alt_index, value_index, time_index, analysis)
 points, values, times = reader(2, 3, 4, 13, 1, analysis)
-
 nine_samples, one_sample = divide_in_random(10, points, values, times)
 
 known_locations = []
 known_values = []
 known_times = []
-
 query_locations = []
 control_values = []
-
 mae = []
 mse = []
 rmse = []
@@ -38,21 +31,13 @@ for i in range(len(nine_samples)):  # for each of the 9 samples
         known_locations.append(nine_samples[i][j][0])  # append point to known locations
         known_values.append(nine_samples[i][j][1])  # append value to known values
         known_times.append(nine_samples[i][j][2])
-# print('Known')
-# print(len(known_locations))
-# print(known_locations)
 for i in range(0, len(one_sample)):
     query_locations.append(one_sample[i][0])
     control_values.append(one_sample[i][1])
-# print('Query')
-# print(len(query_locations))
-# print(query_locations)
 
 idw = InverseDistanceWeighting(numpy.asarray(known_locations), numpy.asarray(known_values), 10)
 # nearest_neighbors, epsilon, power, unknown_locations, weights
 interpolated = idw(6, 0.0001, 2, numpy.asarray(query_locations), None)
-# print(len(interpolated))
-# print(interpolated)
 
 print('Current iteration: 1')
 num_of_known.append(len(known_locations))
