@@ -3,6 +3,7 @@
     <words>
       <w>coords</w>
       <w>dataset</w>
+      <w>rmse</w>
     </words>
   </dictionary>
 </component>
