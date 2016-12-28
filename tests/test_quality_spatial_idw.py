@@ -80,8 +80,8 @@ for i in range(0, len(nine_samples)):
     if i > 0:
         for l in range(0, i):
             for j in range(0, len(nine_samples[l])):
-                known_locations.append(nine_samples[k][j][0])
-                known_values.append(nine_samples[k][j][1])
+                known_locations.append(nine_samples[l][j][0])
+                known_values.append(nine_samples[l][j][1])
     # copy the separate sample to known locations / values
     for m in range(0, len(one_sample)):
         known_locations.append(one_sample[m][0])
