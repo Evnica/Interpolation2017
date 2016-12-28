@@ -1,5 +1,5 @@
 from dateutil import parser
-import numpy
+import statistics
 
 
 class Reader:
@@ -269,4 +269,16 @@ class Writer:
         for i in range(len(mae)):
             output.write(str(i) + ';' + str(num_of_known[i]) + ';' + str(num_of_query[i]) + ';' + str(mae[i]) + ';' +
                          str(mse[i]) + ';' + str(rmse[i]) + ';' + str(mare[i]) + ';' + str(r2[i]) + '\n')
+        output.close()
+
+    def write_quality_with_avg_to_csv(self, mae, mse, rmse, mare, r2, num_of_known, num_of_query):
+        self.output_name += '.csv'
+        output = open(self.output_name, 'w')
+        output.write('iteration;num_known;num_query;MAE;MSE;RMSE;MARE;R^2\n')
+        for i in range(len(mae)):
+            output.write(str(i) + ';' + str(num_of_known[i]) + ';' + str(num_of_query[i]) + ';' + str(mae[i]) + ';' +
+                         str(mse[i]) + ';' + str(rmse[i]) + ';' + str(mare[i]) + ';' + str(r2[i]) + '\n')
+        output.write('AVG;' + str(statistics.mean(num_of_known)) + ';' + str(statistics.mean(num_of_query)) + ';' +
+                     str(statistics.mean(mae)) + ';' + str(statistics.mean(mse)) + ';' + str(statistics.mean(rmse)) +
+                     ';' + str(statistics.mean(mare)) + ';' + str(statistics.mean(r2)))
         output.close()
