@@ -1,4 +1,5 @@
 # statistical methods of error analysis meant to assess interpolation quality
+import statistics
 
 
 def mean_absolute_error(predicted, actual):
@@ -61,3 +62,17 @@ def residual_sum_of_squares(predicted, actual):
 #  p. 243 Statistics for The Exploration and Analysis of Data 7th Ed.
 def coefficient_of_determination(predicted, actual):
     return 1 - (residual_sum_of_squares(predicted, actual)) / (sum_of_squares(actual))
+
+
+def r2_calc(predicted, actual):
+    assert len(predicted) == len(actual), \
+        "number of predicted values [%d] differs from the number of actual values [%d]" % (len(predicted), len(actual))
+    n = len(predicted)
+    sum_of_diffs = 0
+    mean_actual = mean(actual)
+    mean_predicted = mean(predicted)
+    std_actual = statistics.stdev(actual)
+    std_predicted = statistics.stdev(predicted)
+    for i in range(n):
+        sum_of_diffs += (actual[i] - mean_actual)*(predicted[i] - mean_predicted)
+    return (sum_of_diffs / (std_actual * std_predicted) / n) ** 2
