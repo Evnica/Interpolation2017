@@ -9,7 +9,7 @@ import numpy
 start = time.time()
 print('Start ' + str(start))
 reader = Reader('input/wetter.csv')
-analysis = Analysis(None, 5)
+analysis = Analysis(None, 25)
 reader(2, 3, 4, 13, 1, analysis)  # temperature
 print(len(reader.points))
 grid = analysis.generate_grid()
@@ -27,7 +27,7 @@ target_lat_values = [point[0] for point in target_grid]
 target_lon_values = [point[1] for point in target_grid]
 target_alt_values = [point[2] for point in target_grid]
 
-rbf = Rbf(lat_values, lon_values, alt_values, values, function='thin_plate')
+rbf = Rbf(lat_values, lon_values, alt_values, values, function='cubic')
 interpolated_values = rbf(target_lat_values, target_lon_values, target_alt_values)
 
 print(interpolated_values)
@@ -38,7 +38,7 @@ measurements3d = go.Scatter3d(
     z=target_alt_values,
     mode='markers',
     marker=dict(
-        size=20,
+        size=8,
         color=numpy.asarray(interpolated_values),
         colorscale='Jet',  # 'pairs' | 'Greys' | 'Greens' | 'Bluered' | 'Hot' | 'Picnic' | 'Portland' | 'Jet' | 'RdBu'
                            # | 'Blackbody' | 'Earth' | 'Electric' | 'YIOrRd' | 'YIGnBu'
