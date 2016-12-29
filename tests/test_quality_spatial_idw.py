@@ -11,7 +11,7 @@ analysis = Analysis(None, 10)
 reader = Reader('input/wetter.csv')
 # (lat_index, lon_index, alt_index, value_index, time_index, analysis)
 points, values, times = reader(2, 3, 4, 13, 1, analysis)
-nine_samples, one_sample = divide_in_random(10, points, values, times)
+grouped_samples, one_sample = divide_in_random(10, points, values, times)
 
 known_locations = []
 known_values = []
@@ -26,11 +26,11 @@ r2 = []
 num_of_known = []
 num_of_query = []
 
-for i in range(len(nine_samples)):  # for each of the 9 samples
-    for j in range(len(nine_samples[i])):  # for each entry in the sample
-        known_locations.append(nine_samples[i][j][0])  # append point to known locations
-        known_values.append(nine_samples[i][j][1])  # append value to known values
-        known_times.append(nine_samples[i][j][2])
+for i in range(len(grouped_samples)):  # for each of the 9 samples
+    for j in range(len(grouped_samples[i])):  # for each entry in the sample
+        known_locations.append(grouped_samples[i][j][0])  # append point to known locations
+        known_values.append(grouped_samples[i][j][1])  # append value to known values
+        known_times.append(grouped_samples[i][j][2])
 for i in range(0, len(one_sample)):
     query_locations.append(one_sample[i][0])
     control_values.append(one_sample[i][1])
@@ -61,27 +61,27 @@ print('R^2')
 r2.append(qa.r2_calc(interpolated, control_values))
 print(r2[0])
 
-for i in range(0, len(nine_samples)):
+for i in range(0, len(grouped_samples)):
     #  empty all the temporary storage variables
     known_locations = []
     known_values = []
     query_locations = []
     control_values = []
-    for j in range(0, len(nine_samples[i])):
+    for j in range(0, len(grouped_samples[i])):
         #  copy current sample to the query locations / control values
-        query_locations.append(nine_samples[i][j][0])
-        control_values.append(nine_samples[i][j][1])
+        query_locations.append(grouped_samples[i][j][0])
+        control_values.append(grouped_samples[i][j][1])
     #  copy all the samples after this sample to known locations / known values
-    for k in range(i+1, len(nine_samples)):
-        for j in range(0, len(nine_samples[k])):
-            known_locations.append(nine_samples[k][j][0])
-            known_values.append(nine_samples[k][j][1])
+    for k in range(i+1, len(grouped_samples)):
+        for j in range(0, len(grouped_samples[k])):
+            known_locations.append(grouped_samples[k][j][0])
+            known_values.append(grouped_samples[k][j][1])
     # if current sample is not the first one, copy all the samples before this sample to known locations / known values
     if i > 0:
         for l in range(0, i):
-            for j in range(0, len(nine_samples[l])):
-                known_locations.append(nine_samples[l][j][0])
-                known_values.append(nine_samples[l][j][1])
+            for j in range(0, len(grouped_samples[l])):
+                known_locations.append(grouped_samples[l][j][0])
+                known_values.append(grouped_samples[l][j][1])
     # copy the separate sample to known locations / values
     for m in range(0, len(one_sample)):
         known_locations.append(one_sample[m][0])

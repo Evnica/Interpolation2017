@@ -282,3 +282,12 @@ class Writer:
                      str(statistics.mean(mae)) + ';' + str(statistics.mean(mse)) + ';' + str(statistics.mean(rmse)) +
                      ';' + str(statistics.mean(mare)) + ';' + str(statistics.mean(r2)))
         output.close()
+
+    def write_quality_comparison(self, descriptions, mae, mse, rmse, mare, r2):
+        self.output_name += '.csv'
+        output = open(self.output_name, 'w')
+        output.write('#;description;MAE;MSE;RMSE;MARE;R^2\n')
+        for i in range(len(mae)):
+            output.write(str(i) + ';' + descriptions[i] + ';' +  str(mae[i]) + ';' + str(mse[i]) + ';' + str(rmse[i]) +
+                         ';' + str(mare[i]) + ';' + str(r2[i]) + '\n')
+        output.close()
