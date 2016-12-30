@@ -1,4 +1,34 @@
 import numpy
+import datetime
+
+
+class TimeHandler:
+    def __init__(self, timestamps):
+        self.epoch = datetime.datetime.utcfromtimestamp(0)
+        times_in_millis = [self.get_unix_time_in_millis(dt) for dt in timestamps]
+        self.time_max = max(times_in_millis)
+        self.time_min = min(times_in_millis)
+        self.times_normalized = [(t - self.time_min) / (self.time_max - self.time_min) for t in times_in_millis]
+
+    def get_unix_time_in_millis(self, dt):
+        return (dt - self.epoch).total_seconds() * 1000.0
+
+    def raise_to_fourth_dimension(self, points3d, timestamps, time_scale):
+        assert len(points3d) == len(timestamps), \
+            "number of points [%d] differs from the number of timestamps [%d]" % (len(points3d), len(timestamps))
+        points4d = []
+        for i in range(len(points3d)):
+            points4d.append([points3d[i][0], points3d[i][1], points3d[i][2],
+                             self.times_normalized[i] * time_scale])
+        return points4d
+
+    def get_timestamp_from_scaled(self, scaled_timestamp, scale_factor):
+        time_in_millis_normalized = scaled_timestamp / scale_factor
+        return time_in_millis_normalized * (self.time_max - self.time_min) + self.time_min
+
+
+def datetime_from_unix_millis(unix_millis):
+        return datetime.datetime.fromtimestamp((unix_millis - 2 * 60 * 60 * 1000.0)/1000.0)
 
 
 # divides given points, values and timestamps into groups, each of which is composed by means of simple random sampling
