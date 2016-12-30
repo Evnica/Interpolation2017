@@ -88,6 +88,7 @@ class Reader:
         alt_values = [(alt - alt_min) / (alt_max - alt_min) for alt in alt_values]
 
         points = list(map(list, zip(lat_values, lon_values, alt_values)))
+        times = [dt.replace(tzinfo=None) for dt in times]
         self.points = points
         self.values = values
         self.times = times
