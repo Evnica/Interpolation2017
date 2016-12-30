@@ -3,7 +3,7 @@
 # interpolated grid).
 
 from decimal import *
-import numpy
+import interpolation.utils as utils
 
 
 class Analysis:
@@ -18,6 +18,8 @@ class Analysis:
         self.alt_min = None
         self.value_max = None
         self.value_min = None
+        self.time_min = None
+        self.time_max = None
         self.phenomenon = 'Unknown'  # default
         self.phenomenon_unit = "Unknown"
         self.coos = 'WGS84'
@@ -50,6 +52,10 @@ class Analysis:
         self.alt_max = alt_max
         self.alt_min = alt_min
 
+    def set_times(self, time_min, time_max):
+        self.time_min = time_min
+        self.alt_max = time_max
+
     def generate_grid(self):
         step = 1 / self.density
         getcontext().prec = 8
@@ -60,4 +66,18 @@ class Analysis:
                     grid.append([k * step + step / 2, j * step + step / 2, i * step + step / 2])
         return grid
 
-    
+    def generate_time_series_grids(self, timestamps):
+        time_handler = utils.TimeHandler(timestamps)
+        duration = time_handler.time_max - time_handler.time_min
+        num_of_grids = int(duration // self.time_step)
+        grid = self.generate_grid()
+        time_series_grids = []
+        for i in range(0, num_of_grids):
+            current_timestamp = time_handler.time_min + self.time_step*(i+1)
+            normalized_time = time_handler.get_normalized_timestamp(current_timestamp)
+            for j in range(0, len(grid)):
+                time_series_grids.append([grid[j][0], grid[j][1], grid[j][2], normalized_time])
+        if duration % self.time_step != 0:
+            for j in range(0, len(grid)):
+                time_series_grids.append([grid[j][0], grid[j][1], grid[j][2], 1.0])
+        return time_series_grids

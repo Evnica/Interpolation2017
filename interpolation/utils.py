@@ -3,9 +3,9 @@ import datetime
 
 
 class TimeHandler:
-    def __init__(self, timestamps):
+    def __init__(self, timestamps_as_datetime):
         self.epoch = datetime.datetime.utcfromtimestamp(0)
-        times_in_seconds = [self.get_unix_time_in_seconds(dt) for dt in timestamps]
+        times_in_seconds = [self.get_unix_time_in_seconds(dt) for dt in timestamps_as_datetime]
         self.time_max = max(times_in_seconds)
         self.time_min = min(times_in_seconds)
         self.times_normalized = [self.get_normalized_timestamp(t) for t in times_in_seconds]
@@ -28,6 +28,7 @@ class TimeHandler:
 
     def get_normalized_timestamp(self, timestamp_in_seconds):
         return (timestamp_in_seconds - self.time_min) / (self.time_max - self.time_min)
+
 
 def datetime_from_unix_seconds(unix_seconds):
         return datetime.datetime.fromtimestamp((unix_seconds - 2 * 60 * 60))
