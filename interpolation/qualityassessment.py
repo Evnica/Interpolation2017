@@ -65,10 +65,10 @@ def residual_sum_of_squares(predicted, actual):
 
 #  p. 243 Statistics for The Exploration and Analysis of Data 7th Ed.
 def coefficient_of_determination(predicted, actual):
-    return 1 - (residual_sum_of_squares(predicted, actual)) / (sum_of_squares(actual))
+    return 1 - (residual_sum_of_squares(predicted, actual)) / (sum_of_squares(predicted))
 
 
-def r2_calc(predicted, actual):
+def r2_linear(predicted, actual):
     assert len(predicted) == len(actual), \
         "number of predicted values [%d] differs from the number of actual values [%d]" % (len(predicted), len(actual))
     n = len(predicted)
@@ -82,8 +82,15 @@ def r2_calc(predicted, actual):
     return (sum_of_diffs / (std_actual * std_predicted) / n) ** 2
 
 
-def access_quality_of_spatial_interpolation(grouped_samples, one_sample, function='rbf',
-                                            function_type='linear', number_of_neighbors=6, power=2, write=False):
+# according to the formula of keller
+def r2_keller(predicted, actual):
+    rmse2 = root_mean_square_error(predicted, actual)**2
+    mse_obs = sum_of_squares(actual) / len(actual)
+    return max([0, 1 - rmse2/mse_obs])
+
+
+def access_quality_of_spatial_interpolation(grouped_samples, one_sample, function='rbf', function_type='linear',
+                                            number_of_neighbors=6, power=2, write=False, r2formula='keller'):
     known_locations = []
     known_values = []
     known_times = []
@@ -109,7 +116,7 @@ def access_quality_of_spatial_interpolation(grouped_samples, one_sample, functio
     if function == 'idw':
         idw = InverseDistanceWeighting(numpy.asarray(known_locations), numpy.asarray(known_values), 10)
         # nearest_neighbors, epsilon, power, unknown_locations, weights
-        interpolated = idw(number_of_neighbors, 0.0001, power, numpy.asarray(query_locations), None)
+        interpolated = idw(number_of_neighbors, power, numpy.asarray(query_locations))
     else:
         lat_values = [point[0] for point in known_locations]
         lon_values = [point[1] for point in known_locations]
@@ -123,6 +130,14 @@ def access_quality_of_spatial_interpolation(grouped_samples, one_sample, functio
             rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='thin_plate')
         elif function_type == 'cubic':
             rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='cubic')
+        elif function_type == 'inverse':
+            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='inverse')
+        elif function_type == 'quintic':
+            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='quintic')
+        elif function_type == 'gaussian':
+            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='gaussian')
+        elif function_type == 'multiquadric':
+            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='multiquadric')
         else:
             rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='linear')
         interpolated = rbf(target_lat_values, target_lon_values, target_alt_values)
@@ -133,7 +148,15 @@ def access_quality_of_spatial_interpolation(grouped_samples, one_sample, functio
     mse.append(mean_squared_error(interpolated, control_values))
     rmse.append(root_mean_square_error(interpolated, control_values))
     mare.append(mean_absolute_relative_error(interpolated, control_values))
-    r2.append(r2_calc(interpolated, control_values))
+    if r2formula == 'keller':
+        # use the formula of peck and devore
+        r2.append(r2_keller(interpolated, control_values))
+    elif r2formula == 'linear':
+        # use the formula for a linear regression model
+        r2.append(r2_linear(interpolated, control_values))
+    else:
+        # use the formula of Peck and Devore
+        r2.append(coefficient_of_determination(interpolated, control_values))
 
     for i in range(0, len(grouped_samples)):
         #  empty all the temporary storage variables
@@ -167,7 +190,7 @@ def access_quality_of_spatial_interpolation(grouped_samples, one_sample, functio
         if function == 'idw':
             idw = InverseDistanceWeighting(numpy.asarray(known_locations), numpy.asarray(known_values), 10)
             # nearest_neighbors, epsilon, power, unknown_locations, weights
-            interpolated = idw(number_of_neighbors, 0.0001, power, numpy.asarray(query_locations), None)
+            interpolated = idw(number_of_neighbors, power, numpy.asarray(query_locations))
         else:
             lat_values = [point[0] for point in known_locations]
             lon_values = [point[1] for point in known_locations]
@@ -181,6 +204,14 @@ def access_quality_of_spatial_interpolation(grouped_samples, one_sample, functio
                 rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='thin_plate')
             elif function_type == 'cubic':
                 rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='cubic')
+            elif function_type == 'inverse':
+                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='inverse')
+            elif function_type == 'quintic':
+                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='quintic')
+            elif function_type == 'gaussian':
+                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='gaussian')
+            elif function_type == 'multiquadric':
+                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='multiquadric')
             else:
                 rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='linear')
             interpolated = rbf(target_lat_values, target_lon_values, target_alt_values)
@@ -189,18 +220,21 @@ def access_quality_of_spatial_interpolation(grouped_samples, one_sample, functio
         mse.append(mean_squared_error(interpolated, control_values))
         rmse.append(root_mean_square_error(interpolated, control_values))
         mare.append(mean_absolute_relative_error(interpolated, control_values))
-        r2.append(r2_calc(interpolated, control_values))
+        if r2formula == 'keller':
+            # use the formula of peck and devore
+            r2.append(r2_keller(interpolated, control_values))
+        elif r2formula == 'linear':
+            # use the formula for a linear regression model
+            r2.append(r2_linear(interpolated, control_values))
+        else:
+            # use the formula of Peck and Devore
+            r2.append(coefficient_of_determination(interpolated, control_values))
 
     if write:
         if function == 'idw':
             writer = Writer('output/quality_idw_neigh_' + str(number_of_neighbors))
         else:
-            if function_type == 'thin_plate':
-                writer = Writer('output/quality_rbf_thin_plate')
-            elif function_type == 'cubic':
-                writer = Writer('output/quality_rbf_cubic')
-            else:
-                writer = Writer('output/quality_rbf_linear')
+            writer = Writer('output/quality_rbf_' + function_type)
         # write_quality_test_to_csv(mae, mse, rmse, mare, r2, num_of_known, num_of_query):
         writer.write_quality_with_avg_to_csv(mae, mse, rmse, mare, r2, num_of_known, num_of_query)
 
