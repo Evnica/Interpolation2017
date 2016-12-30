@@ -5,13 +5,13 @@ import datetime
 class TimeHandler:
     def __init__(self, timestamps):
         self.epoch = datetime.datetime.utcfromtimestamp(0)
-        times_in_millis = [self.get_unix_time_in_millis(dt) for dt in timestamps]
-        self.time_max = max(times_in_millis)
-        self.time_min = min(times_in_millis)
-        self.times_normalized = [(t - self.time_min) / (self.time_max - self.time_min) for t in times_in_millis]
+        times_in_seconds = [self.get_unix_time_in_seconds(dt) for dt in timestamps]
+        self.time_max = max(times_in_seconds)
+        self.time_min = min(times_in_seconds)
+        self.times_normalized = [self.get_normalized_timestamp(t) for t in times_in_seconds]
 
-    def get_unix_time_in_millis(self, dt):
-        return (dt - self.epoch).total_seconds() * 1000.0
+    def get_unix_time_in_seconds(self, dt):
+        return (dt - self.epoch).total_seconds()
 
     def raise_to_fourth_dimension(self, points3d, timestamps, time_scale):
         assert len(points3d) == len(timestamps), \
@@ -23,12 +23,14 @@ class TimeHandler:
         return points4d
 
     def get_timestamp_from_scaled(self, scaled_timestamp, scale_factor):
-        time_in_millis_normalized = scaled_timestamp / scale_factor
-        return time_in_millis_normalized * (self.time_max - self.time_min) + self.time_min
+        time_in_seconds_normalized = scaled_timestamp / scale_factor
+        return time_in_seconds_normalized * (self.time_max - self.time_min) + self.time_min
 
+    def get_normalized_timestamp(self, timestamp_in_seconds):
+        return (timestamp_in_seconds - self.time_min) / (self.time_max - self.time_min)
 
-def datetime_from_unix_millis(unix_millis):
-        return datetime.datetime.fromtimestamp((unix_millis - 2 * 60 * 60 * 1000.0)/1000.0)
+def datetime_from_unix_seconds(unix_seconds):
+        return datetime.datetime.fromtimestamp((unix_seconds - 2 * 60 * 60))
 
 
 # divides given points, values and timestamps into groups, each of which is composed by means of simple random sampling
