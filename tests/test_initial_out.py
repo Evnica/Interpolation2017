@@ -1,4 +1,3 @@
-from interpolation.analysis import Analysis
 from interpolation.csvconverter import CsvConverter
 from interpolation.iohelper import Writer
 

@@ -119,5 +119,5 @@ print('R^2 ' + str(sum(r2)/len(r2)))
 
 stat_writer = Writer('output/spatial_idw_quality_assessment')
 # write_quality_test_to_csv(mae, mse, rmse, mare, r2, num_of_known, num_of_query):
-stat_writer.write_quality_test_to_csv(mae, mse, rmse, mare, r2, num_of_known, num_of_query)
+stat_writer.write_quality_with_avg_to_csv(mae, mse, rmse, mare, r2, num_of_known, num_of_query)
 print("Done")

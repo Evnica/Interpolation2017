@@ -1,12 +1,19 @@
 <component name="ProjectDictionaryState">
   <dictionary name="Evnica">
     <words>
+      <w>blackbody</w>
+      <w>bluered</w>
       <w>coords</w>
       <w>dataset</w>
+      <w>devore</w>
       <w>interpolator</w>
+      <w>minkowski</w>
       <w>multiquadric</w>
+      <w>prec</w>
       <w>rmse</w>
+      <w>spatio</w>
       <w>sqrt</w>
+      <w>stdev</w>
     </words>
   </dictionary>
 </component>

@@ -289,6 +289,6 @@ class Writer:
         output = open(self.output_name, 'w')
         output.write('#;description;MAE;MSE;RMSE;MARE;R^2\n')
         for i in range(len(mae)):
-            output.write(str(i) + ';' + descriptions[i] + ';' +  str(mae[i]) + ';' + str(mse[i]) + ';' + str(rmse[i]) +
+            output.write(str(i) + ';' + descriptions[i] + ';' + str(mae[i]) + ';' + str(mse[i]) + ';' + str(rmse[i]) +
                          ';' + str(mare[i]) + ';' + str(r2[i]) + '\n')
         output.close()

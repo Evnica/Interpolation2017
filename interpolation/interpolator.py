@@ -50,7 +50,7 @@ class InverseDistanceWeighting:
 
     def __init__(self, points, values, leaves):
         assert len(points) == len(values), "number of measurement values [%d] differs from the number of points [%d]" \
-                                           %(len(points), len(values))
+                                           % (len(points), len(values))
         self.storage = KDTree(points, leafsize=leaves)
         self.values = values
         self.weightedSum = None
@@ -72,6 +72,7 @@ class InverseDistanceWeighting:
 
         self.distances, self.neighbor_locations = \
             self.storage.query(x=query_points, k=nearest_neighbors, p=power)
+        # noinspection PyTypeChecker
         interpolation = numpy.zeros((len(self.distances),) + numpy.shape(self.values[0]))
 
         i = 0
@@ -81,7 +82,9 @@ class InverseDistanceWeighting:
                     current_distances[j] = 0.000000009
             # print(current_distances)
             current_weights = 1 / current_distances**power
+            # noinspection PyTypeChecker
             current_weights /= numpy.sum(current_weights)
+            # noinspection PyTypeChecker
             weighted_value = numpy.dot(current_weights, self.values[nearest_neighbors_indices])
             self.weightedSum += current_weights
             interpolation[i] = weighted_value

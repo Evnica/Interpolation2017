@@ -1,6 +1,5 @@
 import interpolation.qualityassessment as qa
 import time
-import statistics
 from interpolation.iohelper import Reader
 from interpolation.iohelper import Writer
 from interpolation.analysis import Analysis
