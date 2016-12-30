@@ -13,9 +13,10 @@ class TimeHandler:
     def get_unix_time_in_seconds(self, dt):
         return (dt - self.epoch).total_seconds()
 
-    def raise_to_fourth_dimension(self, points3d, timestamps, time_scale):
-        assert len(points3d) == len(timestamps), \
-            "number of points [%d] differs from the number of timestamps [%d]" % (len(points3d), len(timestamps))
+    def raise_to_fourth_dimension(self, points3d, time_scale):
+        assert len(points3d) == len(self.times_normalized), \
+            "number of points [%d] differs from the number of timestamps [%d]" \
+            % (len(points3d), len(self.times_normalized))
         points4d = []
         for i in range(len(points3d)):
             points4d.append([points3d[i][0], points3d[i][1], points3d[i][2],
@@ -36,9 +37,10 @@ def datetime_from_unix_seconds(unix_seconds):
 
 # divides given points, values and timestamps into groups, each of which is composed by means of simple random sampling
 # without replacement
-def divide_in_random(num_of_random_samples, points, values, timestamps):
+def divide_in_random(num_of_random_samples, points, values, timestamps, point_dimension=3):
     assert len(points) == len(values) == len(timestamps), 'number elements in points [%d], ' \
            'values [%d] and timestamps [%d] must be equal' % (len(points), len(values), len(timestamps))
+    assert point_dimension == 3 or point_dimension == 4, 'point dimension must be 3 or 4'
     n = len(points)
     sample_size = n // num_of_random_samples
     rest = n - (sample_size * num_of_random_samples)
@@ -56,9 +58,14 @@ def divide_in_random(num_of_random_samples, points, values, timestamps):
     for i in range(sample_size * (num_of_random_samples - 1)):
         random_index = numpy.random.randint(0, n - number_of_removed_entries)
         # print(random_index)
-        random_samples[sample_index][element_index] = \
-            [[points[random_index][0], points[random_index][1], points[random_index][2]],
-             values[random_index], timestamps[random_index]]
+        if point_dimension == 3:
+            random_samples[sample_index][element_index] = \
+                [[points[random_index][0], points[random_index][1], points[random_index][2]],
+                 values[random_index], timestamps[random_index]]
+        else:
+            random_samples[sample_index][element_index] = [[points[random_index][0], points[random_index][1],
+                                                            points[random_index][2], points[random_index][3]],
+                                                           values[random_index], timestamps[random_index]]
         del (points[random_index])
         del (values[random_index])
         del (timestamps[random_index])
