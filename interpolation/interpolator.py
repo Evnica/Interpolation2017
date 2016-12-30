@@ -18,6 +18,7 @@ class RadialBasisFunctions(Enum):
     cubic = 'cubic'  # r ** 3
     quintic = 'quintic'  # r ** 5
     thin_plate = 'thin_plate'  # r ** 2 * log(r)
+    linear = 'linear'  # r
 
 
 class RbfInterpolator:
@@ -55,16 +56,13 @@ class InverseDistanceWeighting:
         self.weightedSum = None
         self.numberOfWeights = 0
 
-    def __call__(self, nearest_neighbors, epsilon, power, unknown_locations, weights):
+    def __call__(self, nearest_neighbors, power, unknown_locations):
         """
         :param nearest_neighbors: positive int
             Number of nearest neighbors to consider for value calculation
-        :param epsilon: non-negative float, optional
-            Allow approximate nearest neighbors; the kth returned value is guaranteed to be no further than
-            (1+eps) times the distance to the real kth nearest neighbor.
         :param power: float, 1 <= power <= infinity, optional
-            Which Minkowski p-norm to use. 1 is the sum-of-absolute-values “Manhattan” distance 2 is the usual Euclidean
-             distance infinity is the maximum-coordinate-difference distance
+            Which Minkowski p-norm to use. 1 is the sum-of-absolute-values “Manhattan” distance,
+            2 is the usual Euclidean distance
         :return: float or array of floats
             The interpolated values proceeding from the distances to the nearest neighbors and their values.
         """
@@ -73,7 +71,7 @@ class InverseDistanceWeighting:
             self.weightedSum = numpy.zeros(nearest_neighbors)
 
         self.distances, self.neighbor_locations = \
-            self.storage.query(x=query_points, k=nearest_neighbors, eps=epsilon, p=power)
+            self.storage.query(x=query_points, k=nearest_neighbors, p=power)
         interpolation = numpy.zeros((len(self.distances),) + numpy.shape(self.values[0]))
 
         i = 0
@@ -83,8 +81,6 @@ class InverseDistanceWeighting:
                     current_distances[j] = 0.000000009
             # print(current_distances)
             current_weights = 1 / current_distances**power
-            if weights is not None:
-                current_weights *= weights[nearest_neighbors_indices]
             current_weights /= numpy.sum(current_weights)
             weighted_value = numpy.dot(current_weights, self.values[nearest_neighbors_indices])
             self.weightedSum += current_weights
