@@ -17,7 +17,7 @@ stats_mare = []
 stats_r2 = []
 
 function_type = ['thin_plate', 'cubic', 'linear', 'inverse', 'quintic', 'multiquadric', 'gaussian']
-neighbors = [2, 4, 6, 8, 10]
+neighbors = [2, 4, 6, 8, 10, 20, 25]
 powers = [1, 2, 3]
 
 for j in range(len(neighbors)):
