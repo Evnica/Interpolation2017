@@ -18,9 +18,14 @@ class TimeHandler:
             "number of points [%d] differs from the number of timestamps [%d]" \
             % (len(points3d), len(self.times_normalized))
         points4d = []
-        for i in range(len(points3d)):
-            points4d.append([points3d[i][0], points3d[i][1], points3d[i][2],
-                             self.times_normalized[i] * time_scale])
+        if time_scale != 1:
+            for i in range(len(points3d)):
+                points4d.append([points3d[i][0], points3d[i][1], points3d[i][2],
+                                 self.times_normalized[i] * time_scale])
+        else:
+            for i in range(len(points3d)):
+                points4d.append([points3d[i][0], points3d[i][1], points3d[i][2],
+                                 self.times_normalized[i]])
         return points4d
 
     def get_timestamp_from_scaled(self, scaled_timestamp, scale_factor):
