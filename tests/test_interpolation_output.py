@@ -18,7 +18,7 @@ start = time.time()
 print('Start ' + str(start))
 tree = InverseDistanceWeighting(current, values, 10)
 # 6 neighbors, epsilon = 0.01, power = 2, no weights
-interpol = tree(6, 0.01, 2, look_for, None)
+interpol = tree(6, 2, look_for)
 writer = Writer('output/idw_temp_with_duplicates.json')
 writer.write_spatial_grid_to_json(grid, interpol, analysis, reader.times)
 print(time.time() - start)

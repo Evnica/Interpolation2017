@@ -37,7 +37,7 @@ for i in range(0, len(one_sample)):
 
 idw = InverseDistanceWeighting(numpy.asarray(known_locations), numpy.asarray(known_values), 10)
 # nearest_neighbors, epsilon, power, unknown_locations, weights
-interpolated = idw(6, 0.0001, 2, numpy.asarray(query_locations), None)
+interpolated = idw(6, 2, numpy.asarray(query_locations))
 
 print('Current iteration: 1')
 num_of_known.append(len(known_locations))
@@ -58,7 +58,7 @@ print('MARE')
 mare.append(qa.mean_absolute_relative_error(interpolated, control_values))
 print(mare[0])
 print('R^2')
-r2.append(qa.r2_calc(interpolated, control_values))
+r2.append(qa.r2_keller(interpolated, control_values))
 print(r2[0])
 
 for i in range(0, len(grouped_samples)):
@@ -93,7 +93,7 @@ for i in range(0, len(grouped_samples)):
     print('Number of known locations: ' + str(num_of_known[i+1]))
     print('Number of query locations: ' + str(num_of_query[i+1]))
     idw = InverseDistanceWeighting(numpy.asarray(known_locations), numpy.asarray(known_values), 10)
-    interpolated = idw(6, 0.0001, 2, numpy.asarray(query_locations), None)
+    interpolated = idw(6, 2, numpy.asarray(query_locations))
     print('MAE')
     mae.append(qa.mean_absolute_error(interpolated, control_values))
     print(mae[i+1])
@@ -107,7 +107,7 @@ for i in range(0, len(grouped_samples)):
     mare.append(qa.mean_absolute_relative_error(interpolated, control_values))
     print(mare[i+1])
     print('R^2')
-    r2.append(qa.r2_calc(interpolated, control_values))
+    r2.append(qa.r2_keller(interpolated, control_values))
     print(r2[i+1])
 
 print('Results:')
