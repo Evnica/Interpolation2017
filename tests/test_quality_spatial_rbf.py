@@ -75,7 +75,7 @@ print('MARE')
 mare.append(qa.mean_absolute_relative_error(interpolated_values, control_values))
 print(mare[0])
 print('R^2')
-r2.append(qa.r2_calc(interpolated_values, control_values))
+r2.append(qa.r2_keller(interpolated_values, control_values))
 print(r2[0])
 
 for i in range(0, len(grouped_samples)):
@@ -133,7 +133,7 @@ for i in range(0, len(grouped_samples)):
     mare.append(qa.mean_absolute_relative_error(interpolated_values, control_values))
     print(mare[i+1])
     print('R^2')
-    r2.append(qa.r2_calc(interpolated_values, control_values))
+    r2.append(qa.r2_keller(interpolated_values, control_values))
     print(r2[i+1])
 
 print('Results:')
