@@ -52,9 +52,9 @@ class Analysis:
         self.alt_max = alt_max
         self.alt_min = alt_min
 
-    def set_times(self, time_min, time_max):
+    def set_times(self, time_max, time_min):
+        self.time_max = time_max
         self.time_min = time_min
-        self.alt_max = time_max
 
     def generate_grid(self):
         step = 1 / self.density
@@ -73,11 +73,15 @@ class Analysis:
         grid = self.generate_grid()
         time_series_grids = []
         for i in range(0, num_of_grids):
+            current_grid = []
             current_timestamp = time_handler.time_min + self.time_step*i
             normalized_time = time_handler.get_normalized_timestamp(current_timestamp)
             for j in range(0, len(grid)):
-                time_series_grids.append([grid[j][0], grid[j][1], grid[j][2], normalized_time])
+                current_grid.append([grid[j][0], grid[j][1], grid[j][2], normalized_time])
+            time_series_grids.append(current_grid)
         if duration % self.time_step != 0:
+            current_grid = []
             for j in range(0, len(grid)):
-                time_series_grids.append([grid[j][0], grid[j][1], grid[j][2], 1.0])
+                current_grid.append([grid[j][0], grid[j][1], grid[j][2], 1.0])
+            time_series_grids.append(current_grid)
         return time_series_grids
