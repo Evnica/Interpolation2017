@@ -20,6 +20,7 @@ class Reader:
     def __call__(self, lat_index, lon_index, alt_index, value_index, time_index, analysis):
 
         header = self.get_column_names()
+        analysis.header = header
         if 'temp' in header[value_index]:
             analysis.set_phenomenon(0)  # temperature
         elif 'hum' in header[value_index]:

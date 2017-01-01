@@ -5,10 +5,17 @@ import numpy
 
 
 class InterpolationMethod(Enum):
-    idw = 'Inverse Distance Weighting'
-    idw_st = 'Spatio-Temporal IDW'
-    rbf = 'Radial Basis Functions (RBFs)'
-    rbf_st = 'Spatio-Temporal RBFs'
+    IDW = 'IDW: Spatial Inverse Distance Weighting'
+    IDW_ST = 'IDW: Spatio-Temporal Inverse Distance Weighting'
+    RBF = 'RBF: Spatial Radial Basis Functions'
+    RBF_ST = 'RBF: Spatio-Temporal Radial Basis Functions'
+
+    @staticmethod
+    def as_string_sequence():
+        methods = []
+        for name, member in InterpolationMethod.__members__.items():
+            methods.append(member.value)
+        return methods
 
 
 class RadialBasisFunctions(Enum):

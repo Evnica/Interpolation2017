@@ -25,6 +25,7 @@ class Analysis:
         self.coos = 'WGS84'
         self.coos_unit = 'Decimal Degree (lat, lon), Meter (alt)'
         self.coords_order = '[lat, lon, alt]'
+        self.header = None
 
     def set_phenomenon(self, phenomenon):
         if phenomenon == 0:
