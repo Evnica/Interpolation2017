@@ -105,8 +105,8 @@ class Gui(Frame):
         output_file_label.grid(row=10, column=0, sticky=E)
         self.output_file_path_entry = Entry(self.top_frame, width=50)
         self.output_file_path_entry.grid(row=10, column=1, columnspan=2, padx=(10, 0), sticky=W)
-        output_file_browse_btn = Button(self.top_frame, text="Browse...", command=self.save)
-        output_file_browse_btn.grid(row=10, column=3, padx=(10, 0))
+        self.output_file_browse_btn = Button(self.top_frame, text="Browse...", command=self.save)
+        self.output_file_browse_btn.grid(row=10, column=3, padx=(10, 0))
 
         self.top_frame.pack()
 
@@ -168,6 +168,8 @@ class Gui(Frame):
         self.output_file = filedialog.asksaveasfilename(defaultextension='.json')
         if self.output_file is None:
             return
+        else:
+            self.set_text(self.output_file_path_entry, self.output_file)
 
     @staticmethod
     def set_text(entry, text):
