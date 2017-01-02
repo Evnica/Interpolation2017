@@ -23,6 +23,7 @@ class Gui(Frame):
         self.header = ['Unknown']
         self.initial_to_json_checked = IntVar()
         self.interpolate_checked = IntVar()
+        self.output_file = None
 
         # top frame with all options, but no control buttons
         self.top_frame = Frame(self, padx=10, pady=10)
@@ -52,11 +53,11 @@ class Gui(Frame):
         self.checkbox_transform_input.grid(row=2, column=1, columnspan=2, sticky=W, padx=(5, 0))
 
         # rows 3-5: Parameters of input data transformation
-        temperature_label = Label(self.top_frame, text="Temperature column")
+        temperature_label = Label(self.top_frame, text="Temperature Column")
         temperature_label.grid(row=3, column=1, sticky=E)
-        pressure_label = Label(self.top_frame, text="Pressure column")
+        pressure_label = Label(self.top_frame, text="Pressure Column")
         pressure_label.grid(row=4, column=1, sticky=E)
-        humidity_label = Label(self.top_frame, text="Humidity column")
+        humidity_label = Label(self.top_frame, text="Humidity Column")
         humidity_label.grid(row=5, column=1, sticky=E)
 
         self.temperature_combo = AutocompleteCombobox(self.top_frame, width=28)
@@ -77,11 +78,11 @@ class Gui(Frame):
                                                 command=self.check_interpolate)
         self.checkbox_interpolate.grid(row=6, column=1, columnspan=2, sticky=W, padx=(5, 0))
 
-        neighbors_label = Label(self.top_frame, text="Nearest neighbors")
+        neighbors_label = Label(self.top_frame, text="Nearest Neighbors")
         neighbors_label.grid(row=7, column=1, sticky=E)
-        power_label = Label(self.top_frame, text="Power value")
+        power_label = Label(self.top_frame, text="Power Value")
         power_label.grid(row=8, column=1, sticky=E)
-        function_type_label = Label(self.top_frame, text="RBF function type")
+        function_type_label = Label(self.top_frame, text="RBF Function Type")
         function_type_label.grid(row=9, column=1, sticky=E)
 
         self.neighbors_spinner = Spinbox(self.top_frame, from_=2, to=25, width=29)
@@ -93,11 +94,19 @@ class Gui(Frame):
         self.power_spinner.grid(row=8, column=2, sticky=W, padx=(5, 0))
 
         self.functions_combo = AutocompleteCombobox(self.top_frame, width=28)
-        functions = ['thin plate', 'cubic', 'linear']
+        functions = ['Thin Plate', 'Cubic', 'Linear']
         self.functions_combo.set_completion_list(functions)
         self.functions_combo.set(functions[0])
         self.functions_combo.config(state=DISABLED)
         self.functions_combo.grid(row=9, column=2, sticky=W, padx=(5, 0))
+
+        # row 10 - output file location
+        output_file_label = Label(self.top_frame, text="Output File Location")
+        output_file_label.grid(row=10, column=0, sticky=E)
+        self.output_file_path_entry = Entry(self.top_frame, width=50)
+        self.output_file_path_entry.grid(row=10, column=1, columnspan=2, padx=(10, 0), sticky=W)
+        output_file_browse_btn = Button(self.top_frame, text="Browse...", command=self.save)
+        output_file_browse_btn.grid(row=10, column=3, padx=(10, 0))
 
         self.top_frame.pack()
 
@@ -154,6 +163,11 @@ class Gui(Frame):
             self.temperature_combo.config(state=ACTIVE)
             self.pressure_combo.config(state=ACTIVE)
             self.humidity_combo.config(state=ACTIVE)
+
+    def save(self):
+        self.output_file = filedialog.asksaveasfilename(defaultextension='.json')
+        if self.output_file is None:
+            return
 
     @staticmethod
     def set_text(entry, text):
