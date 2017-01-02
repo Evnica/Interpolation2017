@@ -16,7 +16,7 @@ from tkinter import ttk
 __version__ = "1.1"
 
 # I may have broken the unicode...
-Tkinter_umlauts=['odiaeresis', 'adiaeresis', 'udiaeresis', 'Odiaeresis', 'Adiaeresis', 'Udiaeresis', 'ssharp']
+Tkinter_umlauts =['odiaeresis', 'adiaeresis', 'udiaeresis', 'Odiaeresis', 'Adiaeresis', 'Udiaeresis', 'ssharp']
 
 
 class AutocompleteEntry(Entry):
