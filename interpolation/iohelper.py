@@ -6,6 +6,9 @@ class Reader:
     def __init__(self, file_name):
         self.file_name = file_name
         self.analysis = None
+        self.times = []  # 2016-07-28T08:17:33,082Z
+        self.system_times = []
+        self.values = []
 
     def get_column_names(self):
         file = open(self.file_name)
@@ -33,8 +36,6 @@ class Reader:
         file = open(self.file_name)
         i = 0
         j = 0
-        times = []  # 2016-07-28T08:17:33,082Z
-        values = []
         lat_values = []
         lon_values = []
         alt_values = []
@@ -65,8 +66,11 @@ class Reader:
                             lat_values.append(current_lat)
                             lon_values.append(current_lon)
                             alt_values.append(current_alt)
-                            values.append(current_value)
-                            times.append(parser.parse(line_content[time_index]))
+                            self.values.append(current_value)
+                            try:
+                                self.times.append(parser.parse(line_content[time_index]))
+                            except ValueError:
+                                self.system_times.append(line_content[time_index])
                 except ValueError:
                     j += 1
                     "Not all necessary values present in line " + str(i)
@@ -77,27 +81,34 @@ class Reader:
         lon_min = min(lon_values)
         alt_max = max(alt_values)
         alt_min = min(alt_values)
-        time_max = max(times)
-        time_min = min(times)
 
         analysis.set_lat_limits(lat_max, lat_min)
         analysis.set_lon_limits(lon_max, lon_min)
         analysis.set_alt_limits(alt_max, alt_min)
-        analysis.set_times(time_max, time_min)
-        analysis.value_max = max(values)
-        analysis.value_min = min(values)
+        analysis.value_max = max(self.values)
+        analysis.value_min = min(self.values)
 
         lat_values = [(lat - lat_min) / (lat_max - lat_min) for lat in lat_values]
         lon_values = [(lon - lon_min) / (lon_max - lon_min) for lon in lon_values]
         alt_values = [(alt - alt_min) / (alt_max - alt_min) for alt in alt_values]
+        self.points = list(map(list, zip(lat_values, lon_values, alt_values)))
 
-        points = list(map(list, zip(lat_values, lon_values, alt_values)))
-        times = [dt.replace(tzinfo=None) for dt in times]
-        self.points = points
-        self.values = values
-        self.times = times
+        time_max = time_min = None
+        if len(self.times) > 0:
+            self.times = [dt.replace(tzinfo=None) for dt in self.times]
+            time_max = max(self.times)
+            time_min = min(self.times)
+        elif len(self.system_times) > 0:
+            time_max = max(self.system_times)
+            time_min = min(self.system_times)
+        analysis.set_times(time_max, time_min)
+
         self.analysis = analysis
-        return points, values, times
+
+        if len(self.times) > 0:
+            return self.points, self.values, self.times
+        else:
+            return self.points, self.values, self.system_times
 
 
 class Writer:
@@ -248,10 +259,14 @@ class Writer:
                      '"lon_max":"' + str(csv_converter.lon_max) + '",\n'
                      '"lon_min":"' + str(csv_converter.lon_min) + '",\n'
                      '"alt_max":"' + str(csv_converter.alt_max) + '",\n'
-                     '"alt_min":"' + str(csv_converter.alt_min) + '",\n'
-                     '"time_max":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(csv_converter.times[-1]) + '",\n'
-                     '"time_min":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(csv_converter.times[0]) + '",\n'
-                     '"value_max":"' + str(value_max) + '",\n'
+                     '"alt_min":"' + str(csv_converter.alt_min) + '",\n')
+        try:
+            output.write('"time_max":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(csv_converter.time_max) + '",\n'
+                         '"time_min":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(csv_converter.time_min) + '",\n')
+        except ValueError:
+            output.write('"time_max":"' + str(csv_converter.time_max) + '",\n'
+                         '"time_min":"' + str(csv_converter.time_min) + '",\n')
+        output.write('"value_max":"' + str(value_max) + '",\n'
                      '"value_min":"' + str(value_min) + '"\n'
                      '}},'
                      '\n'
@@ -283,10 +298,14 @@ class Writer:
                      '"lon_max":"' + str(csv_converter.lon_max) + '",\n'
                      '"lon_min":"' + str(csv_converter.lon_min) + '",\n'
                      '"alt_max":"' + str(csv_converter.alt_max) + '",\n'
-                     '"alt_min":"' + str(csv_converter.alt_min) + '",\n'
-                     '"time_max":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(csv_converter.times[-1]) + '",\n'
-                     '"time_min":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(csv_converter.times[0]) + '",\n'
-                     '"temp_max":"' + str(csv_converter.temp_max) + '",\n'
+                     '"alt_min":"' + str(csv_converter.alt_min) + '",\n')
+        try:
+            output.write('"time_max":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(csv_converter.time_max) + '",\n'
+                         '"time_min":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(csv_converter.time_min) + '",\n')
+        except ValueError:
+            output.write('"time_max":"' + str(csv_converter.time_max) + '",\n'
+                         '"time_min":"' + str(csv_converter.time_min) + '",\n')
+        output.write('"temp_max":"' + str(csv_converter.temp_max) + '",\n'
                      '"temp_min":"' + str(csv_converter.temp_min) + '",\n'
                      '"hum_max":"' + str(csv_converter.hum_max) + '",\n'
                      '"hum_min":"' + str(csv_converter.hum_min) + '",\n'

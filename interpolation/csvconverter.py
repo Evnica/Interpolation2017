@@ -17,7 +17,10 @@ class CsvConverter:
         self.hum_min = None
         self.press_max = None
         self.press_min = None
+        self.time_max = None
+        self.time_min = None
         self.times = []
+        self.system_times = []
         self.lat_values = []
         self.lon_values = []
         self.alt_values = []
@@ -37,7 +40,12 @@ class CsvConverter:
                         alt_index] == '0' and not line_content[alt_index] == 'nan' and not line_content[
                         temp_index] == 'nan' and not line_content[hum_index] == 'nan' \
                         and not line_content[press_index] == 'nan':
-                    self.times.append(parser.parse(line_content[time_index]))
+
+                    try:
+                        self.times.append(parser.parse(line_content[time_index]))
+                    except ValueError:
+                        self.system_times.append(line_content[time_index])
+
                     self.lat_values.append(float(line_content[lat_index].replace(",", ".")))
                     self.lon_values.append(float(line_content[lon_index].replace(",", ".")))
                     self.alt_values.append(float(line_content[alt_index].replace(",", ".")))
@@ -59,3 +67,9 @@ class CsvConverter:
         self.hum_min = min(self.hum_values)
         self.press_max = max(self.press_values)
         self.press_min = min(self.press_values)
+        if len(self.times) > 0:
+            self.time_max = max(self.times)
+            self.time_min = min(self.times)
+        elif len(self.system_times) > 0:
+            self.time_max = max(self.system_times)
+            self.time_min = min(self.system_times)
