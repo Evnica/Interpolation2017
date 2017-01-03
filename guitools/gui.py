@@ -463,7 +463,7 @@ class Gui(Frame):
                 # default output name is input name + to_json + time in seconds
                 self.output_file = self.extract_filename(self.input_path)[:-4] + '_to_json_' \
                                    + current_seconds + '.json'
-            elif self.interpolate_checked:
+            elif self.interpolate_checked.get() == 1:
                 if len(self.output_file) > 31 and 'to_json_' in self.output_file:
                     # if the output name was automatically generated in the last execution
                     self.output_file = self.output_file[:-31] + '_to_json_' + current_seconds + '.json'
@@ -473,7 +473,28 @@ class Gui(Frame):
             writer.initial_to_json(csv_converter=self.csv_converter)
             self.update()
             self.config(cursor='')
+            self.inform_transformed_to_json(self.csv_converter)
 
+    def inform_transformed_to_json(self, converter):
+        input_for_notification = self.extract_filename(self.input_path)
+        try:
+            dates = 'Start: ' + '{0:%d.%m.%Y %H:%M:%S}'.format(converter.time_min) + '\n'\
+                    'End: ' + '{0:%d.%m.%Y %H:%M:%S}'.format(converter.time_max) + '\n'
+        except ValueError:
+            dates = 'Start: ' + str(converter.time_min) + '"\n'\
+                    'End: ' + str(converter.time_max) + '"\n'
+        messagebox.showinfo('Converted to JSON',
+                            'File ' + input_for_notification + ' was successfully converted to JSON\n'
+                            'and saved under :\n' +
+                            self.output_file + '\n\n'
+                            'Number of observations: ' + str(len(converter.lat_values)) + '\n'
+                            'Latitude: from ' + str(converter.lat_min) + ' to ' + str(converter.lat_max) + '\n'
+                            'Longitude: from ' + str(converter.lon_min) + ' to ' + str(converter.lon_max) + '\n'
+                            'Altitude: from ' + str(converter.alt_min) + ' to ' + str(converter.alt_max) + '\n'
+                            + dates +
+                            'Temperature: from ' + str(converter.temp_min) + ' to ' + str(converter.temp_max) + '\n'
+                            'Humidity: from ' + str(converter.hum_min) + ' to ' + str(converter.hum_max) + '\n'
+                            'Pressure: from ' + str(converter.press_min) + ' to ' + str(converter.press_max) + '\n')
 
     def interpolate(self):
         return
