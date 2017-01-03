@@ -1,16 +1,16 @@
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
+import ntpath
+import time
 from interpolation.interpolator import InterpolationMethod
 from guitools.tkentrycomplete import AutocompleteCombobox
 from guitools.inputcolumnstojson import ColumnSelector
-from interpolation.iohelper import Reader
+from interpolation.iohelper import Reader, Writer
 from interpolation.analysis import Analysis
 from interpolation.csvconverter import CsvConverter
 from interpolation.utils import TimeHandler
-from PIL import Image, ImageTk
-from io import BytesIO
-import base64
+
 
 # root = Tk(): blank main window
 # frame = is an invisible rectangle container
@@ -30,7 +30,7 @@ class Gui(Frame):
         self.interpolate_checked = IntVar()
         self.output_file = None
         self.file_chosen = False
-        self.filename = None
+        self.input_path = None
         self.file_chosen = False
         self.reader = None
         self.analysis = None
@@ -174,7 +174,7 @@ class Gui(Frame):
         self.info_button = Button(self.top_frame, text="About...")
         self.info_button.grid(row=15, column=0, pady=(15, 0), columnspan=2, sticky=W)
 
-        self.calc_button = Button(self.top_frame, text="Execute", width=20)
+        self.calc_button = Button(self.top_frame, text="Execute", width=20, command=self.execute)
         self.calc_button.grid(row=15, column=2, pady=(15, 0), columnspan=2, sticky=E)
         self.calc_button.config(state=DISABLED)
 
@@ -182,7 +182,7 @@ class Gui(Frame):
 
     def calc_max_temporal_step(self):
         try:
-            self.csv_converter = CsvConverter(self.filename)
+            self.csv_converter = CsvConverter(self.input_path)
             self.csv_converter(1, 2, 3, 4, 13, 15, 14)
             if len(self.csv_converter.times) > 0:
                 try:
@@ -230,9 +230,9 @@ class Gui(Frame):
             self.spatio_temporal_rbf_state()
 
     def suitable_file_chosen(self):
-        if self.filename is not None:
+        if self.input_path is not None:
             try:
-                self.reader = Reader(self.filename)
+                self.reader = Reader(self.input_path)
                 self.header = self.reader.get_column_names()
                 lat_in = False
                 lon_in = False
@@ -266,8 +266,8 @@ class Gui(Frame):
             return False
 
     def browse(self):
-        self.filename = filedialog.askopenfilename()
-        self.set_text(self.input_file_path_entry, self.filename)
+        self.input_path = filedialog.askopenfilename(defaultextension='.csv')
+        self.set_text(self.input_file_path_entry, self.input_path)
         if self.suitable_file_chosen():
             values = []
             for i in range(len(self.header)):
@@ -416,6 +416,73 @@ class Gui(Frame):
         self.temporal_step_spinner.config(state=DISABLED)
         if self.initial_to_json_checked.get() == 0:
             self.calc_button.config(state=DISABLED)
+
+    def execute(self):
+        self.transform_initial()
+
+    def transform_initial(self):
+        self.config(cursor='wait')
+        if self.initial_to_json_checked.get() == 1:
+            temp_name = self.temperature_combo.get().strip()
+            press_name = self.pressure_combo.get().strip()
+            hum_name = self.humidity_combo.get().strip()
+
+            num_of_correct_fields = 0
+            temp_index = 13
+            hum_index = 15
+            press_index = 14
+            if temp_name in self.header[13]:
+                num_of_correct_fields += 1
+            else:
+                for i in range(len(self.header)):
+                    if temp_name in self.header[i]:
+                        temp_index = i
+                        break
+            if press_name in self.header[14]:
+                num_of_correct_fields += 1
+            else:
+                for i in range(len(self.header)):
+                    if press_name in self.header[i]:
+                        press_index = i
+                        break
+            if hum_name in self.header[15]:
+                num_of_correct_fields += 1
+            else:
+                for i in range(len(self.header)):
+                    if hum_name in self.header[i]:
+                        hum_index = i
+            if num_of_correct_fields != 3:
+                if self.file_chosen:
+                    try:
+                        self.csv_converter = CsvConverter(self.input_path)
+                        self.csv_converter(1, 2, 3, 4, temp_index, hum_index, press_index)
+                    except:
+                        self.show_load_file_error()
+            current_seconds = str(time.time()).replace('.', '')
+            if self.output_file is None:
+                # default output name is input name + to_json + time in seconds
+                self.output_file = self.extract_filename(self.input_path)[:-4] + '_to_json_' \
+                                   + current_seconds + '.json'
+            elif self.interpolate_checked:
+                if len(self.output_file) > 31 and 'to_json_' in self.output_file:
+                    # if the output name was automatically generated in the last execution
+                    self.output_file = self.output_file[:-31] + '_to_json_' + current_seconds + '.json'
+                else:
+                    self.output_file = self.output_file[:-5] + '_to_json_' + current_seconds + '.json'
+            writer = Writer(self.output_file)
+            writer.initial_to_json(csv_converter=self.csv_converter)
+            self.update()
+            self.config(cursor='')
+
+
+    def interpolate(self):
+        return
+
+    @staticmethod
+    def extract_filename(path):
+        head, tail = ntpath.split(path)
+        return tail or ntpath.basename(head)
+
 
 def start():
     root = Tk()
