@@ -5,7 +5,6 @@ import ntpath
 import time
 from interpolation.interpolator import InterpolationMethod
 from guitools.tkentrycomplete import AutocompleteCombobox
-from guitools.inputcolumnstojson import ColumnSelector
 from interpolation.iohelper import Reader, Writer
 from interpolation.analysis import Analysis
 from interpolation.csvconverter import CsvConverter
@@ -418,62 +417,68 @@ class Gui(Frame):
             self.calc_button.config(state=DISABLED)
 
     def execute(self):
-        self.transform_initial()
+        if self.initial_to_json_checked.get() == 1 and self.interpolate_checked.get() == 1:
+            self.transform_initial()
+            self.interpolate()
+            # TODO: inform of completion
+        elif self.initial_to_json_checked.get() == 1:
+            self.transform_initial()
+            messagebox.showinfo('Converted to JSON', self.inform_transformed_to_json(self.csv_converter))
+        elif self.interpolate_checked.get() == 1:
+            self.interpolate()
 
     def transform_initial(self):
         self.config(cursor='wait')
-        if self.initial_to_json_checked.get() == 1:
-            temp_name = self.temperature_combo.get().strip()
-            press_name = self.pressure_combo.get().strip()
-            hum_name = self.humidity_combo.get().strip()
-
-            num_of_correct_fields = 0
-            temp_index = 13
-            hum_index = 15
-            press_index = 14
-            if temp_name in self.header[13]:
-                num_of_correct_fields += 1
+        temp_name = self.temperature_combo.get().strip()
+        press_name = self.pressure_combo.get().strip()
+        hum_name = self.humidity_combo.get().strip()
+        num_of_correct_fields = 0
+        temp_index = 13
+        hum_index = 15
+        press_index = 14
+        if temp_name in self.header[13]:
+            num_of_correct_fields += 1
+        else:
+            for i in range(len(self.header)):
+                if temp_name in self.header[i]:
+                    temp_index = i
+                    break
+        if press_name in self.header[14]:
+            num_of_correct_fields += 1
+        else:
+            for i in range(len(self.header)):
+                if press_name in self.header[i]:
+                    press_index = i
+                    break
+        if hum_name in self.header[15]:
+            num_of_correct_fields += 1
+        else:
+            for i in range(len(self.header)):
+                if hum_name in self.header[i]:
+                    hum_index = i
+        if num_of_correct_fields != 3:
+            if self.file_chosen:
+                try:
+                    self.csv_converter = CsvConverter(self.input_path)
+                    self.csv_converter(1, 2, 3, 4, temp_index, hum_index, press_index)
+                except:
+                    self.show_load_file_error()
+        current_seconds = str(time.time()).replace('.', '')
+        if self.output_file is None:
+            # default output name is input name + to_json + time in seconds
+            self.output_file = self.extract_filename(self.input_path)[:-4] + '_to_json_' \
+                               + current_seconds + '.json'
+        elif self.interpolate_checked.get() == 1:
+            if len(self.output_file) > 31 and 'to_json_' in self.output_file:
+                # if the output name was automatically generated in the last execution
+                self.output_file = self.output_file[:-31] + '_to_json_' + current_seconds + '.json'
             else:
-                for i in range(len(self.header)):
-                    if temp_name in self.header[i]:
-                        temp_index = i
-                        break
-            if press_name in self.header[14]:
-                num_of_correct_fields += 1
-            else:
-                for i in range(len(self.header)):
-                    if press_name in self.header[i]:
-                        press_index = i
-                        break
-            if hum_name in self.header[15]:
-                num_of_correct_fields += 1
-            else:
-                for i in range(len(self.header)):
-                    if hum_name in self.header[i]:
-                        hum_index = i
-            if num_of_correct_fields != 3:
-                if self.file_chosen:
-                    try:
-                        self.csv_converter = CsvConverter(self.input_path)
-                        self.csv_converter(1, 2, 3, 4, temp_index, hum_index, press_index)
-                    except:
-                        self.show_load_file_error()
-            current_seconds = str(time.time()).replace('.', '')
-            if self.output_file is None:
-                # default output name is input name + to_json + time in seconds
-                self.output_file = self.extract_filename(self.input_path)[:-4] + '_to_json_' \
-                                   + current_seconds + '.json'
-            elif self.interpolate_checked.get() == 1:
-                if len(self.output_file) > 31 and 'to_json_' in self.output_file:
-                    # if the output name was automatically generated in the last execution
-                    self.output_file = self.output_file[:-31] + '_to_json_' + current_seconds + '.json'
-                else:
-                    self.output_file = self.output_file[:-5] + '_to_json_' + current_seconds + '.json'
-            writer = Writer(self.output_file)
-            writer.initial_to_json(csv_converter=self.csv_converter)
-            self.update()
-            self.config(cursor='')
-            self.inform_transformed_to_json(self.csv_converter)
+                self.output_file = self.output_file[:-5] + '_to_json_' + current_seconds + '.json'
+        writer = Writer(self.output_file)
+        writer.initial_to_json(csv_converter=self.csv_converter)
+        self.update()
+        self.config(cursor='')
+        self.inform_transformed_to_json(self.csv_converter)
 
     def inform_transformed_to_json(self, converter):
         input_for_notification = self.extract_filename(self.input_path)
@@ -483,18 +488,14 @@ class Gui(Frame):
         except ValueError:
             dates = 'Start: ' + str(converter.time_min) + '"\n'\
                     'End: ' + str(converter.time_max) + '"\n'
-        messagebox.showinfo('Converted to JSON',
-                            'File ' + input_for_notification + ' was successfully converted to JSON\n'
-                            'and saved under :\n' +
-                            self.output_file + '\n\n'
-                            'Number of observations: ' + str(len(converter.lat_values)) + '\n'
-                            'Latitude: from ' + str(converter.lat_min) + ' to ' + str(converter.lat_max) + '\n'
-                            'Longitude: from ' + str(converter.lon_min) + ' to ' + str(converter.lon_max) + '\n'
-                            'Altitude: from ' + str(converter.alt_min) + ' to ' + str(converter.alt_max) + '\n'
-                            + dates +
-                            'Temperature: from ' + str(converter.temp_min) + ' to ' + str(converter.temp_max) + '\n'
-                            'Humidity: from ' + str(converter.hum_min) + ' to ' + str(converter.hum_max) + '\n'
-                            'Pressure: from ' + str(converter.press_min) + ' to ' + str(converter.press_max) + '\n')
+        return 'File ' + input_for_notification + ' was successfully converted to JSON\n' + 'and saved under :\n' + \
+            self.output_file + '\n\nNumber of observations: ' + str(len(converter.lat_values)) + '\n' \
+            'Latitude: from ' + str(converter.lat_min) + ' to ' + str(converter.lat_max) + '\n' \
+            'Longitude: from ' + str(converter.lon_min) + ' to ' + str(converter.lon_max) + '\n' \
+            'Altitude: from ' + str(converter.alt_min) + ' to ' + str(converter.alt_max) + '\n' + dates + \
+            'Temperature: from ' + str(converter.temp_min) + ' to ' + str(converter.temp_max) + '\n' \
+            'Humidity: from ' + str(converter.hum_min) + ' to ' + str(converter.hum_max) + '\n' \
+            'Pressure: from ' + str(converter.press_min) + ' to ' + str(converter.press_max) + '\n'
 
     def interpolate(self):
         return
