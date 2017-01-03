@@ -42,9 +42,11 @@ class CsvConverter:
                         and not line_content[press_index] == 'nan':
 
                     try:
-                        self.times.append(parser.parse(line_content[time_index]))
+                        time = parser.parse(line_content[time_index])
+                        naive = time.replace(tzinfo=None)
+                        self.times.append(naive)
                     except ValueError:
-                        self.system_times.append(line_content[time_index])
+                        self.system_times.append(int(line_content[time_index]))
 
                     self.lat_values.append(float(line_content[lat_index].replace(",", ".")))
                     self.lon_values.append(float(line_content[lon_index].replace(",", ".")))

@@ -6,6 +6,8 @@ from guitools.tkentrycomplete import AutocompleteCombobox
 from guitools.inputcolumnstojson import ColumnSelector
 from interpolation.iohelper import Reader
 from interpolation.analysis import Analysis
+from interpolation.csvconverter import CsvConverter
+from interpolation.utils import TimeHandler
 from PIL import Image, ImageTk
 from io import BytesIO
 import base64
@@ -30,6 +32,9 @@ class Gui(Frame):
         self.file_chosen = False
         self.filename = None
         self.file_chosen = False
+        self.reader = None
+        self.analysis = None
+        self.csv_converter = None
 
         # top frame with all options, but no control buttons
         self.top_frame = Frame(self, padx=20, pady=20)
@@ -158,11 +163,9 @@ class Gui(Frame):
         self.density_spinner.grid(row=1, column=1, padx=(10, 0), sticky=W)
         self.density_spinner.config(state=DISABLED)
 
-        max_temporal_step = self.calc_max_temporal_step()
-
         temporal_step_label = Label(self.param_frame, text='Temporal Density')
         temporal_step_label.grid(row=2, column=0, sticky=E, padx=(5, 1))
-        self.temporal_step_spinner = Spinbox(self.param_frame, from_=1, to=max_temporal_step, width=18)
+        self.temporal_step_spinner = Spinbox(self.param_frame, from_=1, to=86400, width=18)
         self.temporal_step_spinner.grid(row=2, column=1, padx=(10, 0), sticky=W)
         self.temporal_step_spinner.config(state=DISABLED)
 
@@ -178,7 +181,23 @@ class Gui(Frame):
         self.top_frame.pack()
 
     def calc_max_temporal_step(self):
-        return 300
+        try:
+            self.csv_converter = CsvConverter(self.filename)
+            self.csv_converter(1, 2, 3, 4, 13, 15, 14)
+            if len(self.csv_converter.times) > 0:
+                try:
+                    time_handler = TimeHandler(self.csv_converter.times)
+                    max_temporal_step = time_handler.get_unix_time_in_seconds(self.csv_converter.time_max) \
+                        - time_handler.get_unix_time_in_seconds(self.csv_converter.time_min)
+                except:
+                    max_temporal_step = 60 * 60 * 24
+            elif len(self.csv_converter.system_times) > 0:
+                max_temporal_step = self.csv_converter.time_max - self.csv_converter.time_min
+            else:
+                max_temporal_step = 60 * 60 * 24  # 24 hours maximum
+        except:
+            max_temporal_step = 60 * 60 * 24  # 24 hours maximum
+        return max_temporal_step
 
     def add_column_names_to_combo(self, combo, i):
         combo.set_completion_list(self.header)
@@ -213,8 +232,8 @@ class Gui(Frame):
     def suitable_file_chosen(self):
         if self.filename is not None:
             try:
-                reader = Reader(self.filename)
-                self.header = reader.get_column_names()
+                self.reader = Reader(self.filename)
+                self.header = self.reader.get_column_names()
                 lat_in = False
                 lon_in = False
                 alt_in = False
@@ -282,6 +301,8 @@ class Gui(Frame):
             self.alt_combo.set(self.header[4])
             self.value_combo.set(self.header[13])
             self.time_combo.set(self.header[1])
+
+            self.temporal_step_spinner.config(to=self.calc_max_temporal_step())
 
             if self.initial_to_json_checked.get() == 1:
                 self.input_to_json_on()
