@@ -1,7 +1,22 @@
 from enum import Enum
 from scipy.interpolate import Rbf
 from scipy.spatial import KDTree
+from interpolation.iohelper import Writer
 import numpy
+
+
+def interpolate_with_idw(analysis, points, values, filename, times=None):
+    # TODO: implement interpolate with IDW
+    if times is None:
+        grid = analysis.generate_grid()
+        current = numpy.asarray(points)
+        values = numpy.asarray(values)
+        look_for = numpy.asarray(grid)
+        grids = [grid]
+        tree = InverseDistanceWeighting(current, values, 10)
+        interpol = tree(6, 2, look_for)
+        writer = Writer(filename)
+        writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=[interpol])
 
 
 class InterpolationMethod(Enum):

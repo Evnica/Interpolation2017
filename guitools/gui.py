@@ -3,7 +3,8 @@ from tkinter import filedialog
 from tkinter import messagebox
 import ntpath
 import time
-from interpolation.interpolator import InterpolationMethod
+from interpolation.interpolator import interpolate_with_idw
+from interpolation.interpolator import InterpolationMethod, InverseDistanceWeighting
 from guitools.tkentrycomplete import AutocompleteCombobox
 from interpolation.iohelper import Reader, Writer
 from interpolation.analysis import Analysis
@@ -34,6 +35,11 @@ class Gui(Frame):
         self.reader = None
         self.analysis = None
         self.csv_converter = None
+        self.max_temporal_step = 86400  # default maximum of 24 hours
+        self.neighbors_edited = False
+        self.power_edited = False
+        self.density_edited = False
+        self.temporal_step_edited = False
 
         # top frame with all options, but no control buttons
         self.top_frame = Frame(self, padx=20, pady=20)
@@ -158,7 +164,7 @@ class Gui(Frame):
 
         density_label = Label(self.param_frame, text='Spatial Density')
         density_label.grid(row=1, column=0, sticky=E, padx=(10, 1))
-        self.density_spinner = Spinbox(self.param_frame, from_=1, to=25, width=18)
+        self.density_spinner = Spinbox(self.param_frame, from_=1, to=50, width=18)
         self.density_spinner.grid(row=1, column=1, padx=(10, 0), sticky=W)
         self.density_spinner.config(state=DISABLED)
 
@@ -186,17 +192,17 @@ class Gui(Frame):
             if len(self.csv_converter.times) > 0:
                 try:
                     time_handler = TimeHandler(self.csv_converter.times)
-                    max_temporal_step = time_handler.get_unix_time_in_seconds(self.csv_converter.time_max) \
+                    self.max_temporal_step = time_handler.get_unix_time_in_seconds(self.csv_converter.time_max) \
                         - time_handler.get_unix_time_in_seconds(self.csv_converter.time_min)
                 except:
-                    max_temporal_step = 60 * 60 * 24
+                    self.max_temporal_step = 60 * 60 * 24
             elif len(self.csv_converter.system_times) > 0:
-                max_temporal_step = self.csv_converter.time_max - self.csv_converter.time_min
+                self.max_temporal_step = self.csv_converter.time_max - self.csv_converter.time_min
             else:
-                max_temporal_step = 60 * 60 * 24  # 24 hours maximum
+                self.max_temporal_step = 60 * 60 * 24  # 24 hours maximum
         except:
-            max_temporal_step = 60 * 60 * 24  # 24 hours maximum
-        return max_temporal_step
+            self.max_temporal_step = 60 * 60 * 24  # 24 hours maximum
+        return self.max_temporal_step
 
     def add_column_names_to_combo(self, combo, i):
         combo.set_completion_list(self.header)
@@ -265,7 +271,9 @@ class Gui(Frame):
             return False
 
     def browse(self):
-        self.input_path = filedialog.askopenfilename(defaultextension='.csv')
+        self.input_path = filedialog.askopenfilename(defaultextension='.csv',
+                                                     filetypes=[('Comma Separated Value Files', '*.csv'),
+                                                                ('Text Files', '*.txt')])
         self.set_text(self.input_file_path_entry, self.input_path)
         if self.suitable_file_chosen():
             values = []
@@ -417,15 +425,18 @@ class Gui(Frame):
             self.calc_button.config(state=DISABLED)
 
     def execute(self):
-        if self.initial_to_json_checked.get() == 1 and self.interpolate_checked.get() == 1:
-            self.transform_initial()
-            self.interpolate()
-            # TODO: inform of completion
-        elif self.initial_to_json_checked.get() == 1:
-            self.transform_initial()
-            messagebox.showinfo('Converted to JSON', self.inform_transformed_to_json(self.csv_converter))
-        elif self.interpolate_checked.get() == 1:
-            self.interpolate()
+        if self.output_file is not None:
+            if self.initial_to_json_checked.get() == 1 and self.interpolate_checked.get() == 1:
+                self.transform_initial()
+                self.interpolate()
+                # TODO: inform of completion
+            elif self.initial_to_json_checked.get() == 1:
+                self.transform_initial()
+                messagebox.showinfo('Converted to JSON', self.inform_transformed_to_json(self.csv_converter))
+            elif self.interpolate_checked.get() == 1:
+                self.interpolate()
+        else:
+            messagebox.showerror('Choose output file', 'Please select an output file location and name to proceed.')
 
     def transform_initial(self):
         self.config(cursor='wait')
@@ -498,7 +509,128 @@ class Gui(Frame):
             'Pressure: from ' + str(converter.press_min) + ' to ' + str(converter.press_max) + '\n'
 
     def interpolate(self):
+        self.config(cursor='wait')
+        self.update()
+        function = self.interpolation_methods_combo.get()
+        nearest_neighbors = None
+        power = None
+        function_type = None
+        if 'IDW' in function:
+            # get nearest neighbors input
+            try:
+                neighbors_input = int(self.neighbors_spinner.get())
+                if neighbors_input > 25:
+                    nearest_neighbors = 25  # to maximum
+                    self.neighbors_edited = True
+            except ValueError:
+                nearest_neighbors = 6  # to default
+            # get power input
+            try:
+                power = int(self.power_spinner.get())
+                if power > 3:
+                    power = 3  # to max
+                    self.power_edited = True
+            except ValueError:
+                power = 2  # to default
+
+        else:
+            # TODO: prepare parameters for RBF interpolation
+            function_type = self.functions_combo.get()
+            if 'Thin' in function_type:
+                function_type = 'thin_plate'
+            if 'Cub' in function_type:
+                function_type = 'cubic'
+            if 'Lin' in function_type:
+                function_type = 'linear'
+            print('RBF not implemented yet')
+
+        lat_column = self.lat_combo.get()
+        lon_column = self.lon_combo.get()
+        alt_column = self.alt_combo.get()
+        value_column = self.value_combo.get()
+        timestamp_column = self.time_combo.get()
+
+        lat_index = 2
+        lon_index = 3
+        alt_index = 4
+        value_index = 13
+        timestamp_index = 1
+
+        for i in range(len(self.header)):
+            if lat_column in self.header[i]:
+                lat_index = i
+                break
+        for i in range(len(self.header)):
+            if lon_column in self.header[i]:
+                lon_index = i
+                break
+        for i in range(len(self.header)):
+            if alt_column in self.header[i]:
+                alt_index = i
+                break
+        for i in range(len(self.header)):
+            if value_column in self.header[i]:
+                value_index = i
+                break
+        for i in range(len(self.header)):
+            if timestamp_column in self.header[i]:
+                timestamp_index = i
+                break
+
+        try:
+            spatial_density = int(self.density_spinner.get())
+            if spatial_density > 50:
+                spatial_density = 50
+                self.density_edited = True
+        except ValueError:
+            spatial_density = 1  # default is one big cube
+
+        if 'Spatio' in function:
+            try:
+                temporal_step = int(self.temporal_step_spinner.get())
+                if temporal_step > self.max_temporal_step:
+                    temporal_step = self.max_temporal_step  # if the input bigger than possible maximum
+                    self.temporal_step_edited = True
+            except ValueError:
+                temporal_step = self.max_temporal_step / 2  # to illustrate change, it has to be at least 2 cubes
+            self.analysis = Analysis(temporal_step, spatial_density)
+            self.analysis.nearest_neighbors = nearest_neighbors
+            self.analysis.power = power
+            reader = Reader(self.input_path)
+            reader(lat_index, lon_index, alt_index, value_index, timestamp_index, self.analysis)
+            if 'IDW' in function:
+                if len(reader.times) > 0:
+                    times = reader.times
+                else:
+                    times = reader.system_times
+                interpolate_with_idw(analysis=self.analysis, points=reader.points, values=reader.values,
+                                     filename=self.output_file, times=times)
+            else:
+                self.interpolate_with_rbf()
+        else:
+            self.analysis = Analysis(None, spatial_density)
+            reader = Reader(self.input_path)
+            reader(lat_index, lon_index, alt_index, value_index, timestamp_index, self.analysis)
+            if 'IDW' in function:
+                interpolate_with_idw(analysis=self.analysis, points=reader.points, values=reader.values,
+                                     filename=self.output_file)
+            else:
+                self.interpolate_with_rbf()
+        # TODO: inform on changes in parameters
+        self.config(cursor='')
+        self.all_edited_parameter_flag_to_false()
+
+
+
+    def interpolate_with_rbf(self, analysis):
+        # TODO: implement interpolate with RBF
         return
+
+    def all_edited_parameter_flag_to_false(self):
+        self.neighbors_edited = False
+        self.power_edited = False
+        self.density_edited = False
+        self.temporal_step_edited = False
 
     @staticmethod
     def extract_filename(path):
