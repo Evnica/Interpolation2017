@@ -29,6 +29,7 @@ class Analysis:
         self.nearest_neighbors = 6
         self.power = 2
         self.function = 'thin_plate'
+        self.interpolation_method = None
 
     def set_phenomenon(self, phenomenon):
         if phenomenon == 0:

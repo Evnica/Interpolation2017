@@ -4,22 +4,14 @@ from tkinter import messagebox
 import ntpath
 import time
 from interpolation.interpolator import interpolate_with_idw
-from interpolation.interpolator import InterpolationMethod, InverseDistanceWeighting
+from interpolation.interpolator import InterpolationMethod
+from interpolation.qualityassessment import access_quality_of_spatial_interpolation
 from guitools.tkentrycomplete import AutocompleteCombobox
 from interpolation.iohelper import Reader, Writer
 from interpolation.analysis import Analysis
 from interpolation.csvconverter import CsvConverter
 from interpolation.utils import TimeHandler
-
-
-# root = Tk(): blank main window
-# frame = is an invisible rectangle container
-# pack(fill=X)  # grows with the window, filling its width
-# pack(fill=Y, side=LEFT)  # grows with the window, filling its height
-# by default all widgets are placed on top of each other, side=LEFT allows to place them in one row
-# bg='red', fg='white' background and foreground colors
-# self.QUIT = Button(self, text="QUIT", fg="red", command=root.destroy)
-# filename = filedialog.askopenfilename(), pathlabel.config(text=filename)
+from interpolation.utils import divide_in_random
 
 
 class Gui(Frame):
@@ -426,6 +418,7 @@ class Gui(Frame):
 
     def execute(self):
         if self.output_file is not None:
+            show_statistics = None
             if self.initial_to_json_checked.get() == 1 and self.interpolate_checked.get() == 1:
                 self.transform_initial()
                 self.interpolate()
@@ -435,6 +428,30 @@ class Gui(Frame):
                 messagebox.showinfo('Converted to JSON', self.inform_transformed_to_json(self.csv_converter))
             elif self.interpolate_checked.get() == 1:
                 self.interpolate()
+                show_statistics = messagebox.askyesno('Interpolated', self.inform_interpolated())
+            if show_statistics is not None:
+                if show_statistics:
+                    if len(self.reader.times) > 0:
+                        times = self.reader.times
+                    else:
+                        times = self.reader.system_times
+                    grouped_samples, one_sample = divide_in_random(10, self.reader.points, self.reader.values, times)
+                    if 'idw' in self.analysis.interpolation_method:
+                        mae, mse, rmse, mare, r2 = \
+                            access_quality_of_spatial_interpolation(grouped_samples=grouped_samples,
+                                                                    one_sample=one_sample,
+                                                                    function='idw',
+                                                                    number_of_neighbors=self.analysis.nearest_neighbors,
+                                                                    power=self.analysis.power, r2formula='keller')
+                    else:
+                        mae, mse, rmse, mare, r2 = \
+                            access_quality_of_spatial_interpolation(grouped_samples=grouped_samples,
+                                                                    one_sample=one_sample, function='rbf',
+                                                                    function_type=self.analysis.function,
+                                                                    r2formula='keller')
+                    messagebox.showinfo('Statistics', self.statistics_to_string(mae, mse, rmse, mare, r2))
+            self.reader = None
+            self.analysis = None
         else:
             messagebox.showerror('Choose output file', 'Please select an output file location and name to proceed.')
 
@@ -491,6 +508,14 @@ class Gui(Frame):
         self.config(cursor='')
         self.inform_transformed_to_json(self.csv_converter)
 
+    @staticmethod
+    def statistics_to_string(mae, mse, rmse, mare, r2):
+        return 'Mean Absolute Error: ' + format(mae, '.3f') + \
+               '\nMean Square Error: ' + format(mse, '.3f') + \
+               '\nRoot Mean Square Error: ' + format(rmse, '.3f') + \
+               '\nMean Absolute Relative Error: ' + format(mare, '.3f') + \
+               '\nCoefficient of Determination (R^2): ' + format(r2, '.3f')
+
     def inform_transformed_to_json(self, converter):
         input_for_notification = self.extract_filename(self.input_path)
         try:
@@ -499,7 +524,7 @@ class Gui(Frame):
         except ValueError:
             dates = 'Start: ' + str(converter.time_min) + '"\n'\
                     'End: ' + str(converter.time_max) + '"\n'
-        return 'File ' + input_for_notification + ' was successfully converted to JSON\n' + 'and saved under :\n' + \
+        return 'File ' + input_for_notification + ' was successfully converted to JSON ' + 'and saved under :\n' + \
             self.output_file + '\n\nNumber of observations: ' + str(len(converter.lat_values)) + '\n' \
             'Latitude: from ' + str(converter.lat_min) + ' to ' + str(converter.lat_max) + '\n' \
             'Longitude: from ' + str(converter.lon_min) + ' to ' + str(converter.lon_max) + '\n' \
@@ -508,18 +533,40 @@ class Gui(Frame):
             'Humidity: from ' + str(converter.hum_min) + ' to ' + str(converter.hum_max) + '\n' \
             'Pressure: from ' + str(converter.press_min) + ' to ' + str(converter.press_max) + '\n'
 
+    def inform_interpolated(self):
+        input_for_notification = self.extract_filename(self.input_path)
+        try:
+            dates = 'Start: ' + '{0:%d.%m.%Y %H:%M:%S}'.format(self.analysis.time_min) + '\n'\
+                    'End: ' + '{0:%d.%m.%Y %H:%M:%S}'.format(self.analysis.time_max) + '\n'
+        except ValueError:
+            dates = 'Start: ' + str(self.analysis.time_min) + '"\n'\
+                    'End: ' + str(self.analysis.time_max) + '"\n'
+        if self.analysis.time_step is not None:
+            temporal_step = str(self.analysis.time_step)
+        else:
+            temporal_step = 'N/A (pure spatial interpolation)'
+        return 'File ' + input_for_notification + ' was successfully interpolated ' + 'and saved under :\n' + \
+            self.output_file + '\n\nNumber of observations: ' + str(len(self.reader.points)) + '\n' \
+            'Latitude: from ' + str(self.analysis.lat_min) + ' to ' + str(self.analysis.lat_max) + '\n' \
+            'Longitude: from ' + str(self.analysis.lon_min) + ' to ' + str(self.analysis.lon_max) + '\n' \
+            'Altitude: from ' + str(self.analysis.alt_min) + ' to ' + str(self.analysis.alt_max) + '\n' + dates + \
+            'Temporal step: ' + temporal_step + ' seconds\n' \
+            'Spatial density: ' + (str(self.analysis.density) + ' x ')*2 + str(self.analysis.density) + '\n' \
+            'Phenomenon: ' + str(self.analysis.phenomenon) + '\n' \
+            'Value: from ' + str(self.analysis.value_min) + ' to ' + str(self.analysis.value_max) + '\n\n' \
+            'Do you want to calculate interpolation error? '
+
     def interpolate(self):
         self.config(cursor='wait')
         self.update()
+        nearest_neighbors = 6  # default
+        power = 2  # default
         function = self.interpolation_methods_combo.get()
-        nearest_neighbors = None
-        power = None
-        function_type = None
         if 'IDW' in function:
             # get nearest neighbors input
             try:
-                neighbors_input = int(self.neighbors_spinner.get())
-                if neighbors_input > 25:
+                nearest_neighbors = int(self.neighbors_spinner.get().strip())
+                if nearest_neighbors > 25:
                     nearest_neighbors = 25  # to maximum
                     self.neighbors_edited = True
             except ValueError:
@@ -532,9 +579,8 @@ class Gui(Frame):
                     self.power_edited = True
             except ValueError:
                 power = 2  # to default
-
         else:
-            # TODO: prepare parameters for RBF interpolation
+            # prepare parameters for RBF interpolation
             function_type = self.functions_combo.get()
             if 'Thin' in function_type:
                 function_type = 'thin_plate'
@@ -593,12 +639,14 @@ class Gui(Frame):
                     self.temporal_step_edited = True
             except ValueError:
                 temporal_step = self.max_temporal_step / 2  # to illustrate change, it has to be at least 2 cubes
+                self.temporal_step_edited = True
             self.analysis = Analysis(temporal_step, spatial_density)
             self.analysis.nearest_neighbors = nearest_neighbors
             self.analysis.power = power
-            reader = Reader(self.input_path)
+            self.reader = reader = Reader(self.input_path)
             reader(lat_index, lon_index, alt_index, value_index, timestamp_index, self.analysis)
             if 'IDW' in function:
+                self.analysis.interpolation_method = 'idw'
                 if len(reader.times) > 0:
                     times = reader.times
                 else:
@@ -606,21 +654,24 @@ class Gui(Frame):
                 interpolate_with_idw(analysis=self.analysis, points=reader.points, values=reader.values,
                                      filename=self.output_file, times=times)
             else:
+                self.analysis.interpolation_method = 'rbf'
                 self.interpolate_with_rbf()
         else:
             self.analysis = Analysis(None, spatial_density)
-            reader = Reader(self.input_path)
+            self.analysis.nearest_neighbors = nearest_neighbors
+            self.analysis.power = power
+            self.reader = reader = Reader(self.input_path)
             reader(lat_index, lon_index, alt_index, value_index, timestamp_index, self.analysis)
             if 'IDW' in function:
+                self.analysis.interpolation_method = 'idw'
                 interpolate_with_idw(analysis=self.analysis, points=reader.points, values=reader.values,
                                      filename=self.output_file)
             else:
+                self.analysis.interpolation_method = 'rbf'
                 self.interpolate_with_rbf()
         # TODO: inform on changes in parameters
         self.config(cursor='')
         self.all_edited_parameter_flag_to_false()
-
-
 
     def interpolate_with_rbf(self, analysis):
         # TODO: implement interpolate with RBF

@@ -9,6 +9,7 @@ class Reader:
         self.times = []  # 2016-07-28T08:17:33,082Z
         self.system_times = []
         self.values = []
+        self.points = []
 
     def get_column_names(self):
         file = open(self.file_name)
@@ -203,8 +204,8 @@ class Writer:
                 # for all points in the grid but the last
                 for i in range(len(grids[j]) - 1):
                     # write coords and values of each point to a grid object, ending it with a ','
-                    output.write('{"coords":[' + format(grids[j][i][0], '.3f') + ', ' + format(grids[j][i][1], '.3f') + ', '
-                                 + format(grids[j][i][2], '.3f') + '], "val":' + str(grid_values[j][i]) + '},\n')
+                    output.write('{"coords":[' + format(grids[j][i][0], '.3f') + ', ' + format(grids[j][i][1], '.3f') +
+                                 ', ' + format(grids[j][i][2], '.3f') + '], "val":' + str(grid_values[j][i]) + '},\n')
                 # for the last point in the grid, write its coords and values and close the grid object
                 output.write('{"coords":[' + format(grids[j][-1][0], '.3f') + ', ' + format(grids[j][-1][1], '.3f')
                              + ', ' + format(grids[j][-1][2], '.3f') + '], "val":' + str(grid_values[j][-1]) + '}\n')
