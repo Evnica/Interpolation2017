@@ -118,6 +118,7 @@ def access_quality_of_spatial_interpolation(grouped_samples, one_sample, functio
         # nearest_neighbors, epsilon, power, unknown_locations, weights
         interpolated = idw(number_of_neighbors, power, numpy.asarray(query_locations))
     else:
+
         lat_values = [point[0] for point in known_locations]
         lon_values = [point[1] for point in known_locations]
         alt_values = [point[2] for point in known_locations]
@@ -126,21 +127,14 @@ def access_quality_of_spatial_interpolation(grouped_samples, one_sample, functio
         target_lon_values = [point[1] for point in query_locations]
         target_alt_values = [point[2] for point in query_locations]
 
-        if function_type == 'thin_plate':
-            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='thin_plate')
-        elif function_type == 'cubic':
-            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='cubic')
-        elif function_type == 'inverse':
-            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='inverse')
-        elif function_type == 'quintic':
-            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='quintic')
-        elif function_type == 'gaussian':
-            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='gaussian')
-        elif function_type == 'multiquadric':
-            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='multiquadric')
+        if len(known_locations[0]) == 3:
+            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function=function_type)
+            interpolated = rbf(target_lat_values, target_lon_values, target_alt_values)
         else:
-            rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='linear')
-        interpolated = rbf(target_lat_values, target_lon_values, target_alt_values)
+            time_values = [point[3] for point in known_locations]
+            target_time_values = [point[3] for point in query_locations]
+            rbf = Rbf(lat_values, lon_values, alt_values, time_values, known_values, function=function_type)
+            interpolated = rbf(target_lat_values, target_lon_values, target_alt_values, target_time_values)
 
     num_of_known.append(len(known_locations))
     num_of_query.append(len(query_locations))
