@@ -89,8 +89,8 @@ def r2_keller(predicted, actual):
     return max([0, 1 - rmse2/mse_obs])
 
 
-def access_quality_of_spatial_interpolation(grouped_samples, one_sample, function='rbf', function_type='linear',
-                                            number_of_neighbors=6, power=2, write=False, r2formula='keller'):
+def access_quality_of_interpolation(grouped_samples, one_sample, function='rbf', function_type='linear',
+                                    number_of_neighbors=6, power=2, write=False, r2formula='keller'):
     known_locations = []
     known_values = []
     known_times = []
@@ -194,21 +194,14 @@ def access_quality_of_spatial_interpolation(grouped_samples, one_sample, functio
             target_lon_values = [point[1] for point in query_locations]
             target_alt_values = [point[2] for point in query_locations]
 
-            if function_type == 'thin_plate':
-                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='thin_plate')
-            elif function_type == 'cubic':
-                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='cubic')
-            elif function_type == 'inverse':
-                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='inverse')
-            elif function_type == 'quintic':
-                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='quintic')
-            elif function_type == 'gaussian':
-                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='gaussian')
-            elif function_type == 'multiquadric':
-                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='multiquadric')
+            if len(known_locations[0]) == 3:
+                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function=function_type)
+                interpolated = rbf(target_lat_values, target_lon_values, target_alt_values)
             else:
-                rbf = Rbf(lat_values, lon_values, alt_values, known_values, function='linear')
-            interpolated = rbf(target_lat_values, target_lon_values, target_alt_values)
+                time_values = [point[3] for point in known_locations]
+                target_time_values = [point[3] for point in query_locations]
+                rbf = Rbf(lat_values, lon_values, alt_values, time_values, known_values, function=function_type)
+                interpolated = rbf(target_lat_values, target_lon_values, target_alt_values, target_time_values)
 
         mae.append(mean_absolute_error(interpolated, control_values))
         mse.append(mean_squared_error(interpolated, control_values))
