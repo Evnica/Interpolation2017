@@ -79,11 +79,13 @@ class Analysis:
         for i in range(0, num_of_grids):
             current_grid = []
             current_timestamp = time_handler.time_min + self.time_step*i
+            if current_timestamp > time_handler.time_max:
+                current_timestamp = time_handler.time_max
             normalized_time = time_handler.get_normalized_timestamp(current_timestamp)
             for j in range(0, len(grid)):
                 current_grid.append([grid[j][0], grid[j][1], grid[j][2], normalized_time])
             time_series_grids.append(current_grid)
-        if duration % self.time_step != 0:
+        if duration % self.time_step != 0 and num_of_grids > 1:
             current_grid = []
             for j in range(0, len(grid)):
                 current_grid.append([grid[j][0], grid[j][1], grid[j][2], 1.0])
