@@ -26,6 +26,9 @@ class Analysis:
         self.coos_unit = 'Decimal Degree (lat, lon), Meter (alt)'
         self.coords_order = '[lat, lon, alt]'
         self.header = None
+        self.nearest_neighbors = 6
+        self.power = 2
+        self.function = 'thin_plate'
 
     def set_phenomenon(self, phenomenon):
         if phenomenon == 0:
