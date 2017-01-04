@@ -2,10 +2,12 @@ from enum import Enum
 from scipy.interpolate import Rbf
 from scipy.spatial import KDTree
 from interpolation.iohelper import Writer
+from interpolation.utils import TimeHandler
 import numpy
 
 
 def interpolate_with_idw(analysis, points, values, filename, times=None):
+    writer = Writer(filename)
     # TODO: implement interpolate with IDW
     if times is None:
         grid = analysis.generate_grid()
@@ -14,9 +16,21 @@ def interpolate_with_idw(analysis, points, values, filename, times=None):
         look_for = numpy.asarray(grid)
         grids = [grid]
         tree = InverseDistanceWeighting(current, values, 10)
-        interpol = tree(6, 2, look_for)
-        writer = Writer(filename)
-        writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=[interpol])
+        interpol = tree(analysis.nearest_neighbors, analysis.power, look_for)
+        grid_values = [interpol]
+    else:
+        time_handler = TimeHandler(times)
+        points4d = time_handler.raise_to_fourth_dimension(points3d=points, time_scale=1)
+        grids = analysis.generate_time_series_grids(timestamps=times)
+        current = numpy.asarray(points4d)
+        values = numpy.asarray(values)
+        tree = InverseDistanceWeighting(current, values, 10)
+        grid_values = []
+        for i in range(len(grids)):
+            look_for = numpy.asarray(grids[i])
+            grid_values.append(tree(analysis.nearest_neighbors, analysis.power, look_for))
+    writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=grid_values)
+
 
 
 class InterpolationMethod(Enum):
