@@ -4,11 +4,14 @@ import datetime
 
 class TimeHandler:
     def __init__(self, timestamps_as_datetime):
-        self.epoch = datetime.datetime.utcfromtimestamp(0)
-        times_in_seconds = [self.get_unix_time_in_seconds(dt) for dt in timestamps_as_datetime]
-        self.time_max = max(times_in_seconds)
-        self.time_min = min(times_in_seconds)
-        self.times_normalized = [self.get_normalized_timestamp(t) for t in times_in_seconds]
+        if isinstance(timestamps_as_datetime[0], datetime.date):
+            self.epoch = datetime.datetime.utcfromtimestamp(0)
+            self.times_in_seconds = [self.get_unix_time_in_seconds(dt) for dt in timestamps_as_datetime]
+        else:
+            self.times_in_seconds = [float(dt) for dt in timestamps_as_datetime ]
+        self.time_max = max(self.times_in_seconds)
+        self.time_min = min(self.times_in_seconds)
+        self.times_normalized = [self.get_normalized_timestamp(t) for t in self.times_in_seconds]
 
     def get_unix_time_in_seconds(self, dt):
         return (dt - self.epoch).total_seconds()

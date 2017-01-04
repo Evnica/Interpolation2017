@@ -124,7 +124,7 @@ class Writer:
         self.output_name = output_name
 
     # write a grid dataset to json
-    def write_spatial_grid_to_json(self, grid, values, analysis, times):
+    def write_spatial_grid_to_json(self, grid, values, analysis):
         output = open(self.output_name, 'w')
         output.write('[\n')
         output.write('{"Metadata":')
@@ -142,22 +142,20 @@ class Writer:
                      '"alt_max":"' + str(analysis.alt_max) + '",\n'
                      '"alt_min":"' + str(analysis.alt_min) + '",\n'
                      )
-        if times[0] is not None and times[1] is not None:
-            output.write('"time_max":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(times[-1]) + '",\n'
-                         '"time_min":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(times[0]) + '",\n'
-                         '"value_max":"' + str(max(values)) + '",\n'
-                         '"value_min":"' + str(min(values)) + '"\n'
-                         '}},'
-                         '\n'
-                         '{"0":[\n')
+        if analysis.time_max is not None and analysis.time_min is not None:
+            try:
+                output.write('"time_max":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(analysis.time_max) + '",\n'
+                             '"time_min":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(analysis.time_min) + '",\n')
+            except ValueError:
+                output.write('"time_max":"' + str(analysis.time_max) + '",\n'
+                             '"time_min":"' + str(analysis.time_min) + '",\n')
+
         else:
             output.write('"time_max":"None",\n'
-                         '"time_min":"None",\n'
-                         '"value_max":"' + str(max(values)) + '",\n'
-                         '"value_min":"' + str(min(values)) + '"\n'
-                         '}},'
-                         '\n'
-                         '{"0":[\n')
+                         '"time_min":"None",\n')
+        output.write('"value_max":"' + str(max(values)) + '",\n'
+                     '"value_min":"' + str(min(values)) + '"\n}},\n'
+                     '{"0":[\n')
         for i in range(len(grid) - 1):
             output.write('{"coords":[' + format(grid[i][0], '.3f') + ', ' + format(grid[i][1], '.3f') + ', ' +
                          format(grid[i][2], '.3f') + ']' + ','
@@ -187,10 +185,14 @@ class Writer:
                      '"lon_max":"' + str(analysis.lon_max) + '",\n'
                      '"lon_min":"' + str(analysis.lon_min) + '",\n'
                      '"alt_max":"' + str(analysis.alt_max) + '",\n'
-                     '"alt_min":"' + str(analysis.alt_min) + '",\n'
-                     '"time_max":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(analysis.time_max) + '",\n'
-                     '"time_min":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(analysis.time_min) + '",\n'
-                     '"value_max":"' + str(analysis.value_max) + '",\n'
+                     '"alt_min":"' + str(analysis.alt_min) + '",\n')
+        try:
+            output.write('"time_max":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(analysis.time_max) + '",\n'
+                         '"time_min":"' + '{0:%d.%m.%Y %H:%M:%S}'.format(analysis.time_min) + '",\n')
+        except ValueError:
+            output.write('"time_max":"' + str(analysis.time_max) + '",\n'
+                         '"time_min":"' + str(analysis.time_min) + '",\n')
+        output.write('"value_max":"' + str(analysis.value_max) + '",\n'
                      '"value_min":"' + str(analysis.value_min) + '"\n}},\n')  # close metadata object
         if len(grids) > 1:
             # for all grids but the last
