@@ -31,6 +31,11 @@ def interpolate_with_idw(analysis, points, values, filename, times=None):
     writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=grid_values)
 
 
+def interpolate_with_rbf():
+    # TODO: implement RBF interpolation
+    return
+
+
 class InterpolationMethod(Enum):
     IDW = 'IDW: Spatial Inverse Distance Weighting'
     IDW_ST = 'IDW: Spatio-Temporal Inverse Distance Weighting'

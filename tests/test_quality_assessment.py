@@ -1,4 +1,4 @@
-from interpolation.qualityassessment import access_quality_of_spatial_interpolation
+from interpolation.qualityassessment import access_quality_of_interpolation
 from interpolation.iohelper import Reader, Writer
 from interpolation.analysis import Analysis
 from interpolation.utils import divide_in_random, TimeHandler
@@ -26,13 +26,13 @@ powers = [1, 2, 3]
 
 for j in range(len(neighbors)):
     for k in range(len(powers)):
-        mae, mse, rmse, mare, r2 = \
-            access_quality_of_spatial_interpolation(grouped_samples=grouped_samples,
-                                                    one_sample=one_sample,
-                                                    function='idw',
-                                                    number_of_neighbors=neighbors[j],
-                                                    power=powers[k], r2formula='keller')
         print('idw [neighbors: ' + str(neighbors[j]) + ', power: ' + str(powers[k]) + '] in process')
+        mae, mse, rmse, mare, r2 = \
+            access_quality_of_interpolation(grouped_samples=grouped_samples,
+                                            one_sample=one_sample,
+                                            function='idw',
+                                            number_of_neighbors=neighbors[j],
+                                            power=powers[k], r2formula='keller')
         description.append('idw [neighbors: ' + str(neighbors[j]) + ', power: ' + str(powers[k]) + ']')
         stats_mae.append(mae)
         stats_mse.append(mse)
@@ -42,11 +42,11 @@ for j in range(len(neighbors)):
         print('Done')
 
 for m in range(len(function_type)):
-    mae, mse, rmse, mare, r2 = \
-        access_quality_of_spatial_interpolation(grouped_samples=grouped_samples,
-                                                one_sample=one_sample,
-                                                function='rbf', function_type=function_type[m], r2formula='keller')
     print('rbf ' + function_type[m] + ' in process')
+    mae, mse, rmse, mare, r2 = \
+        access_quality_of_interpolation(grouped_samples=grouped_samples,
+                                        one_sample=one_sample,
+                                        function='rbf', function_type=function_type[m], r2formula='keller')
     description.append('rbf ' + function_type[m])
     stats_mae.append(mae)
     stats_mse.append(mse)
@@ -55,7 +55,7 @@ for m in range(len(function_type)):
     stats_r2.append(r2)
     print('Done')
 
-writer = Writer('output/quality_comparison_4d')
+writer = Writer('output/quality_comparison_4d-2')
 writer.write_quality_comparison(description, stats_mae, stats_mse, stats_rmse, stats_mare, stats_r2)
 print('All done')
 

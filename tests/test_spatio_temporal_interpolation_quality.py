@@ -15,7 +15,7 @@ random_samples, last_sample = utils.divide_in_random(10, points=points4d, timest
                                                      point_dimension=4)
 # access_quality_of_spatial_interpolation(grouped_samples, one_sample, function='rbf', function_type='linear',
 # number_of_neighbors=6, power=2, write=False, r2formula='keller'):
-qa.access_quality_of_spatial_interpolation(random_samples, last_sample, function='idw', write=True)
+qa.access_quality_of_interpolation(random_samples, last_sample, function='idw', write=True)
 # grids = analysis.generate_time_series_grids(reader.times)
 
-qa.access_quality_of_spatial_interpolation(random_samples, last_sample, write=True)
+qa.access_quality_of_interpolation(random_samples, last_sample, write=True)
