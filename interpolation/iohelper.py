@@ -95,7 +95,8 @@ class Reader:
 
         time_max = time_min = None
         if len(self.times) > 0:
-            self.times = [dt.replace(tzinfo=None) for dt in self.times]
+            times = [dt.replace(tzinfo=None) for dt in self.times]
+            self.times = times
             time_max = max(self.times)
             time_min = min(self.times)
         elif len(self.system_times) > 0:
