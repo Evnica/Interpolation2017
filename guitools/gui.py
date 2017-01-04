@@ -3,9 +3,9 @@ from tkinter import filedialog
 from tkinter import messagebox
 import ntpath
 import time
-from interpolation.interpolator import interpolate_with_idw
+from interpolation.interpolator import interpolate_with_idw, interpolate_with_rbf
 from interpolation.interpolator import InterpolationMethod
-from interpolation.qualityassessment import access_quality_of_spatial_interpolation
+from interpolation.qualityassessment import access_quality_of_interpolation
 from guitools.tkentrycomplete import AutocompleteCombobox
 from interpolation.iohelper import Reader, Writer
 from interpolation.analysis import Analysis
@@ -94,11 +94,15 @@ class Gui(Frame):
         function_type_label = Label(self.top_frame, text="RBF Function Type")
         function_type_label.grid(row=9, column=1, sticky=E)
 
-        self.neighbors_spinner = Spinbox(self.top_frame, from_=2, to=25, width=23)
+        neighbor_spinner_var = StringVar(self)
+        neighbor_spinner_var.set('6')
+        self.neighbors_spinner = Spinbox(self.top_frame, from_=2, to=25, width=23, textvariable=neighbor_spinner_var)
         self.neighbors_spinner.config(state=DISABLED)
         self.neighbors_spinner.grid(row=7, column=2, sticky=W, padx=(5, 0))
 
-        self.power_spinner = Spinbox(self.top_frame, from_=1, to=3, width=23)
+        power_spinner_var = StringVar(self)
+        power_spinner_var.set('2')
+        self.power_spinner = Spinbox(self.top_frame, from_=1, to=3, width=23, textvariable=power_spinner_var)
         self.power_spinner.config(state=DISABLED)
         self.power_spinner.grid(row=8, column=2, sticky=W, padx=(5, 0))
 
@@ -156,7 +160,9 @@ class Gui(Frame):
 
         density_label = Label(self.param_frame, text='Spatial Density')
         density_label.grid(row=1, column=0, sticky=E, padx=(10, 1))
-        self.density_spinner = Spinbox(self.param_frame, from_=1, to=50, width=18)
+        density_spinner_var = StringVar(self)
+        density_spinner_var.set('10')
+        self.density_spinner = Spinbox(self.param_frame, from_=1, to=50, width=18, textvariable=density_spinner_var)
         self.density_spinner.grid(row=1, column=1, padx=(10, 0), sticky=W)
         self.density_spinner.config(state=DISABLED)
 
@@ -428,7 +434,9 @@ class Gui(Frame):
                 messagebox.showinfo('Converted to JSON', self.inform_transformed_to_json(self.csv_converter))
             elif self.interpolate_checked.get() == 1:
                 self.interpolate()
-                show_statistics = messagebox.askyesno('Interpolated', self.inform_interpolated())
+                message = self.inform_interpolated() + '\n' + self.inform_parameters_set_to_default() + \
+                                                       '\n' + 'Do you want to calculate interpolation error? '
+                show_statistics = messagebox.askyesno('Interpolated', message)
             if show_statistics is not None:
                 if show_statistics:
                     if len(self.reader.times) > 0:
@@ -438,20 +446,21 @@ class Gui(Frame):
                     grouped_samples, one_sample = divide_in_random(10, self.reader.points, self.reader.values, times)
                     if 'idw' in self.analysis.interpolation_method:
                         mae, mse, rmse, mare, r2 = \
-                            access_quality_of_spatial_interpolation(grouped_samples=grouped_samples,
-                                                                    one_sample=one_sample,
-                                                                    function='idw',
-                                                                    number_of_neighbors=self.analysis.nearest_neighbors,
-                                                                    power=self.analysis.power, r2formula='keller')
+                            access_quality_of_interpolation(grouped_samples=grouped_samples,
+                                                            one_sample=one_sample,
+                                                            function='idw',
+                                                            number_of_neighbors=self.analysis.nearest_neighbors,
+                                                            power=self.analysis.power, r2formula='keller')
                     else:
                         mae, mse, rmse, mare, r2 = \
-                            access_quality_of_spatial_interpolation(grouped_samples=grouped_samples,
-                                                                    one_sample=one_sample, function='rbf',
-                                                                    function_type=self.analysis.function,
-                                                                    r2formula='keller')
+                            access_quality_of_interpolation(grouped_samples=grouped_samples,
+                                                            one_sample=one_sample, function='rbf',
+                                                            function_type=self.analysis.function,
+                                                            r2formula='keller')
                     messagebox.showinfo('Statistics', self.statistics_to_string(mae, mse, rmse, mare, r2))
             self.reader = None
             self.analysis = None
+            self.all_edited_parameter_flag_to_false()
         else:
             messagebox.showerror('Choose output file', 'Please select an output file location and name to proceed.')
 
@@ -553,8 +562,7 @@ class Gui(Frame):
             'Temporal step: ' + temporal_step + ' seconds\n' \
             'Spatial density: ' + (str(self.analysis.density) + ' x ')*2 + str(self.analysis.density) + '\n' \
             'Phenomenon: ' + str(self.analysis.phenomenon) + '\n' \
-            'Value: from ' + str(self.analysis.value_min) + ' to ' + str(self.analysis.value_max) + '\n\n' \
-            'Do you want to calculate interpolation error? '
+            'Value: from ' + str(self.analysis.value_min) + ' to ' + str(self.analysis.value_max) + '\n'
 
     def interpolate(self):
         self.config(cursor='wait')
@@ -571,6 +579,7 @@ class Gui(Frame):
                     self.neighbors_edited = True
             except ValueError:
                 nearest_neighbors = 6  # to default
+                self.neighbors_edited = True
             # get power input
             try:
                 power = int(self.power_spinner.get())
@@ -579,6 +588,7 @@ class Gui(Frame):
                     self.power_edited = True
             except ValueError:
                 power = 2  # to default
+                self.power_edited = True
         else:
             # prepare parameters for RBF interpolation
             function_type = self.functions_combo.get()
@@ -629,7 +639,8 @@ class Gui(Frame):
                 spatial_density = 50
                 self.density_edited = True
         except ValueError:
-            spatial_density = 1  # default is one big cube
+            spatial_density = 10  # default
+            self.density_edited = True
 
         if 'Spatio' in function:
             try:
@@ -638,7 +649,7 @@ class Gui(Frame):
                     temporal_step = self.max_temporal_step  # if the input bigger than possible maximum
                     self.temporal_step_edited = True
             except ValueError:
-                temporal_step = self.max_temporal_step / 2  # to illustrate change, it has to be at least 2 cubes
+                temporal_step = self.max_temporal_step  # to illustrate change, it has to be at least 2 cubes
                 self.temporal_step_edited = True
             self.analysis = Analysis(temporal_step, spatial_density)
             self.analysis.nearest_neighbors = nearest_neighbors
@@ -655,7 +666,7 @@ class Gui(Frame):
                                      filename=self.output_file, times=times)
             else:
                 self.analysis.interpolation_method = 'rbf'
-                self.interpolate_with_rbf()
+                interpolate_with_rbf()
         else:
             self.analysis = Analysis(None, spatial_density)
             self.analysis.nearest_neighbors = nearest_neighbors
@@ -668,14 +679,26 @@ class Gui(Frame):
                                      filename=self.output_file)
             else:
                 self.analysis.interpolation_method = 'rbf'
-                self.interpolate_with_rbf()
-        # TODO: inform on changes in parameters
+                interpolate_with_rbf()
         self.config(cursor='')
-        self.all_edited_parameter_flag_to_false()
 
     def interpolate_with_rbf(self, analysis):
         # TODO: implement interpolate with RBF
         return
+
+    def inform_parameters_set_to_default(self):
+        info = ''
+        if self.neighbors_edited or self.power_edited or self.density_edited or self.temporal_step_edited:
+            info = 'Changes in interpolation parameters due to illegal input values:\n'
+            if self.neighbors_edited:
+                info += 'Number of nearest neighbors: ' + str(self.analysis.nearest_neighbors) + '\n'
+            if self.power_edited:
+                info += 'Power: ' + str(self.analysis.power) + '\n'
+            if self.density_edited:
+                info += 'Spatial density: ' + str(self.analysis.density) + '\n'
+            if self.temporal_step_edited:
+                info += 'Temporal step: ' + str(self.analysis.time_step)
+        return info
 
     def all_edited_parameter_flag_to_false(self):
         self.neighbors_edited = False
