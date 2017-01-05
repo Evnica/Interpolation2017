@@ -1,5 +1,6 @@
 from dateutil import parser
 import statistics
+import random
 
 
 class Reader:
@@ -59,22 +60,36 @@ class Reader:
                         current_alt = float(line_content[alt_index].replace(",", "."))
                         current_value = float(line_content[value_index].replace(",", "."))
 
-                        if potential_duplicate_lat != current_lat and \
-                           potential_duplicate_lon != current_lon and potential_duplicate_alt != current_alt:
+                        if potential_duplicate_lat != current_lat or \
+                           potential_duplicate_lon != current_lon or potential_duplicate_alt != current_alt:
+                            random_noise = random.uniform(0.0000000001, 0.000000009)
+                            if potential_duplicate_lat != current_lat:
+                                lat_values.append(current_lat)
+                            else:
+                                lat_values.append(current_lat + random_noise)
+                            if potential_duplicate_lon != current_lon:
+                                lon_values.append(current_lon)
+                            else:
+                                lon_values.append(current_lon + random_noise)
+                            if potential_duplicate_alt != current_alt:
+                                alt_values.append(current_alt)
+                            else:
+                                alt_values.append(current_alt + random_noise)
+
+                            self.values.append(current_value)
+
                             potential_duplicate_lat = current_lat
                             potential_duplicate_lon = current_lon
                             potential_duplicate_alt = current_alt
-                            lat_values.append(current_lat)
-                            lon_values.append(current_lon)
-                            alt_values.append(current_alt)
-                            self.values.append(current_value)
+
                             try:
                                 self.times.append(parser.parse(line_content[time_index]))
                             except ValueError:
                                 self.system_times.append(line_content[time_index])
                 except ValueError:
                     j += 1
-                    "Not all necessary values present in line " + str(i)
+                    print("Not all necessary values are present in the line " + str(i))
+        # print(str(j) + ' lines were not valid')
         file.close()
         lat_max = max(lat_values)
         lat_min = min(lat_values)
