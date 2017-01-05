@@ -31,9 +31,36 @@ def interpolate_with_idw(analysis, points, values, filename, times=None):
     writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=grid_values)
 
 
-def interpolate_with_rbf():
-    # TODO: implement RBF interpolation
-    return
+def interpolate_with_rbf(analysis, points, values, filename, times=None):
+    writer = Writer(filename)
+    lat_values = [point[0] for point in points]
+    lon_values = [point[1] for point in points]
+    alt_values = [point[2] for point in points]
+    # 3 d points - pure spatial interpolation
+    if times is None:
+        analysis.dimension = 3
+        grid = analysis.generate_grid()
+        grids = [grid]
+        target_lat_values = [point[0] for point in grid]
+        target_lon_values = [point[1] for point in grid]
+        target_alt_values = [point[2] for point in grid]
+        rbf = Rbf(lat_values, lon_values, alt_values, values, function=analysis.function)
+        interpolated = [rbf(target_lat_values, target_lon_values, target_alt_values)]
+    else:
+        analysis.dimension = 4
+        time_handler = TimeHandler(times)
+        points4d = time_handler.raise_to_fourth_dimension(points3d=points, time_scale=1)
+        time_values = [point[3] for point in points4d]
+        grids = analysis.generate_time_series_grids(times)
+        interpolated = []
+        for i in range(len(grids)):
+            target_lat_values = [point[0] for point in grids[i]]
+            target_lon_values = [point[1] for point in grids[i]]
+            target_alt_values = [point[2] for point in grids[i]]
+            target_time_values = [point[3] for point in grids[i]]
+            rbf = Rbf(lat_values, lon_values, alt_values, time_values, values, function=analysis.function)
+            interpolated.append(rbf(target_lat_values, target_lon_values, target_alt_values, target_time_values))
+    writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=interpolated)
 
 
 class InterpolationMethod(Enum):
