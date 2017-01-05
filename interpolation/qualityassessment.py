@@ -86,7 +86,11 @@ def r2_linear(predicted, actual):
 def r2_keller(predicted, actual):
     rmse2 = root_mean_square_error(predicted, actual)**2
     mse_obs = sum_of_squares(actual) / len(actual)
-    return max([0, 1 - rmse2/mse_obs])
+    if mse_obs == 0.0 or mse_obs == 0:
+        result = 0
+    else:
+        result = max([0, 1 - rmse2/mse_obs])
+    return result
 
 
 def access_quality_of_interpolation(grouped_samples, one_sample, function='rbf', function_type='linear',
@@ -203,6 +207,8 @@ def access_quality_of_interpolation(grouped_samples, one_sample, function='rbf',
                 rbf = Rbf(lat_values, lon_values, alt_values, time_values, known_values, function=function_type)
                 interpolated = rbf(target_lat_values, target_lon_values, target_alt_values, target_time_values)
 
+        for i in range(len(interpolated)):
+            print(interpolated[i], control_values[i])
         mae.append(mean_absolute_error(interpolated, control_values))
         mse.append(mean_squared_error(interpolated, control_values))
         rmse.append(root_mean_square_error(interpolated, control_values))

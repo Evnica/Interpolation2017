@@ -30,6 +30,7 @@ class Analysis:
         self.power = 2
         self.function = 'thin_plate'
         self.interpolation_method = None
+        self.dimension = None
 
     def set_phenomenon(self, phenomenon):
         if phenomenon == 0:

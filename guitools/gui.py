@@ -443,7 +443,15 @@ class Gui(Frame):
                         times = self.reader.times
                     else:
                         times = self.reader.system_times
-                    grouped_samples, one_sample = divide_in_random(10, self.reader.points, self.reader.values, times)
+                    if self.analysis.dimension == 3:
+                        grouped_samples, one_sample = divide_in_random(10, self.reader.points,
+                                                                       self.reader.values, times)
+                    else:
+                        time_handler = TimeHandler(times)
+                        points4d = time_handler.raise_to_fourth_dimension(points3d=self.reader.points, time_scale=1)
+                        grouped_samples, one_sample = divide_in_random(num_of_random_samples=10, points=points4d,
+                                                                       values=self.reader.values, timestamps=times,
+                                                                       point_dimension=4)
                     if 'idw' in self.analysis.interpolation_method:
                         mae, mse, rmse, mare, r2 = \
                             access_quality_of_interpolation(grouped_samples=grouped_samples,
@@ -551,7 +559,7 @@ class Gui(Frame):
             dates = 'Start: ' + str(self.analysis.time_min) + '"\n'\
                     'End: ' + str(self.analysis.time_max) + '"\n'
         if self.analysis.time_step is not None:
-            temporal_step = str(self.analysis.time_step)
+            temporal_step = str(self.analysis.time_step) + ' seconds\n'
         else:
             temporal_step = 'N/A (pure spatial interpolation)'
         return 'File ' + input_for_notification + ' was successfully interpolated ' + 'and saved under :\n' + \
@@ -559,7 +567,7 @@ class Gui(Frame):
             'Latitude: from ' + str(self.analysis.lat_min) + ' to ' + str(self.analysis.lat_max) + '\n' \
             'Longitude: from ' + str(self.analysis.lon_min) + ' to ' + str(self.analysis.lon_max) + '\n' \
             'Altitude: from ' + str(self.analysis.alt_min) + ' to ' + str(self.analysis.alt_max) + '\n' + dates + \
-            'Temporal step: ' + temporal_step + ' seconds\n' \
+            'Temporal step: ' + temporal_step +\
             'Spatial density: ' + (str(self.analysis.density) + ' x ')*2 + str(self.analysis.density) + '\n' \
             'Phenomenon: ' + str(self.analysis.phenomenon) + '\n' \
             'Value: from ' + str(self.analysis.value_min) + ' to ' + str(self.analysis.value_max) + '\n'
@@ -570,35 +578,34 @@ class Gui(Frame):
         nearest_neighbors = 6  # default
         power = 2  # default
         function = self.interpolation_methods_combo.get()
-        if 'IDW' in function:
-            # get nearest neighbors input
-            try:
-                nearest_neighbors = int(self.neighbors_spinner.get().strip())
-                if nearest_neighbors > 25:
-                    nearest_neighbors = 25  # to maximum
-                    self.neighbors_edited = True
-            except ValueError:
-                nearest_neighbors = 6  # to default
+
+        # get nearest neighbors input
+        try:
+            nearest_neighbors = int(self.neighbors_spinner.get().strip())
+            if nearest_neighbors > 25:
+                nearest_neighbors = 25  # to maximum
                 self.neighbors_edited = True
-            # get power input
-            try:
-                power = int(self.power_spinner.get())
-                if power > 3:
-                    power = 3  # to max
-                    self.power_edited = True
-            except ValueError:
-                power = 2  # to default
+        except ValueError:
+            nearest_neighbors = 6  # to default
+            self.neighbors_edited = True
+        # get power input
+        try:
+            power = int(self.power_spinner.get())
+            if power > 3:
+                power = 3  # to max
                 self.power_edited = True
-        else:
-            # prepare parameters for RBF interpolation
-            function_type = self.functions_combo.get()
-            if 'Thin' in function_type:
-                function_type = 'thin_plate'
-            if 'Cub' in function_type:
-                function_type = 'cubic'
-            if 'Lin' in function_type:
-                function_type = 'linear'
-            print('RBF not implemented yet')
+        except ValueError:
+            power = 2  # to default
+            self.power_edited = True
+
+        # prepare parameters for RBF interpolation
+        function_type = self.functions_combo.get()
+        if 'Thin' in function_type:
+            function_type = 'thin_plate'
+        if 'Cub' in function_type:
+            function_type = 'cubic'
+        if 'Lin' in function_type:
+            function_type = 'linear'
 
         lat_column = self.lat_combo.get()
         lon_column = self.lon_combo.get()
@@ -642,7 +649,7 @@ class Gui(Frame):
             spatial_density = 10  # default
             self.density_edited = True
 
-        if 'Spatio' in function:
+        if 'Spatio' in function:  # spatio-temporal interpolation
             try:
                 temporal_step = int(self.temporal_step_spinner.get())
                 if temporal_step > self.max_temporal_step:
@@ -654,23 +661,26 @@ class Gui(Frame):
             self.analysis = Analysis(temporal_step, spatial_density)
             self.analysis.nearest_neighbors = nearest_neighbors
             self.analysis.power = power
+            self.analysis.function = function_type
             self.reader = reader = Reader(self.input_path)
             reader(lat_index, lon_index, alt_index, value_index, timestamp_index, self.analysis)
+            if len(reader.times) > 0:
+                times = reader.times
+            else:
+                times = reader.system_times
             if 'IDW' in function:
                 self.analysis.interpolation_method = 'idw'
-                if len(reader.times) > 0:
-                    times = reader.times
-                else:
-                    times = reader.system_times
                 interpolate_with_idw(analysis=self.analysis, points=reader.points, values=reader.values,
                                      filename=self.output_file, times=times)
-            else:
+            else:  # RBF
                 self.analysis.interpolation_method = 'rbf'
-                interpolate_with_rbf()
-        else:
+                interpolate_with_rbf(analysis=self.analysis, points=reader.points, values=reader.values,
+                                     filename=self.output_file, times=times)
+        else:  # pure spatial interpolation
             self.analysis = Analysis(None, spatial_density)
             self.analysis.nearest_neighbors = nearest_neighbors
             self.analysis.power = power
+            self.analysis.function = function_type
             self.reader = reader = Reader(self.input_path)
             reader(lat_index, lon_index, alt_index, value_index, timestamp_index, self.analysis)
             if 'IDW' in function:
@@ -679,7 +689,8 @@ class Gui(Frame):
                                      filename=self.output_file)
             else:
                 self.analysis.interpolation_method = 'rbf'
-                interpolate_with_rbf()
+                interpolate_with_rbf(analysis=self.analysis, points=reader.points, values=reader.values,
+                                     filename=self.output_file)
         self.config(cursor='')
 
     def interpolate_with_rbf(self, analysis):
