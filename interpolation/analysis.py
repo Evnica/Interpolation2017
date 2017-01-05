@@ -16,6 +16,8 @@ class Analysis:
         self.lon_min = None
         self.alt_max = None
         self.alt_min = None
+        self.input_max = None
+        self.input_min = None
         self.value_max = None
         self.value_min = None
         self.time_min = None

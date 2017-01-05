@@ -16,6 +16,8 @@ def interpolate_with_idw(analysis, points, values, filename, times=None):
         grids = [grid]
         tree = InverseDistanceWeighting(current, values, 10)
         interpol = tree(analysis.nearest_neighbors, analysis.power, look_for)
+        analysis.value_max = max(interpol)
+        analysis.value_min = min(interpol)
         grid_values = [interpol]
     else:
         time_handler = TimeHandler(times)
@@ -28,6 +30,13 @@ def interpolate_with_idw(analysis, points, values, filename, times=None):
         for i in range(len(grids)):
             look_for = numpy.asarray(grids[i])
             grid_values.append(tree(analysis.nearest_neighbors, analysis.power, look_for))
+        max_values = []
+        min_values = []
+        for i in range(len(grid_values)):
+            max_values.append(max(grid_values[i]))
+            min_values.append(min(grid_values[i]))
+        analysis.value_max = max(max_values)
+        analysis.value_min = min(min_values)
     writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=grid_values)
 
 
@@ -85,20 +94,6 @@ class RadialBasisFunctions(Enum):
     quintic = 'quintic'  # r ** 5
     thin_plate = 'thin_plate'  # r ** 2 * log(r)
     linear = 'linear'  # r
-
-
-class RbfInterpolator:
-    def __init__(self, points, values, target_grid, epsilon, rbf_type, smooth):
-        lat_values = [point[0] for point in points]
-        lon_values = [point[1] for point in points]
-        alt_values = [point[2] for point in points]
-
-        target_lat_values = [point[0] for point in target_grid]
-        target_lon_values = [point[1] for point in target_grid]
-        target_alt_values = [point[2] for point in target_grid]
-
-        self.rbf = Rbf(lat_values, lon_values, alt_values, values, epsilon=epsilon, function=rbf_type, smooth=smooth)
-        self.interpolated_values = self.rbf(target_lat_values, target_lon_values, target_alt_values)
 
 
 class InverseDistanceWeighting:
