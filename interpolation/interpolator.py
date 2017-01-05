@@ -55,6 +55,8 @@ def interpolate_with_rbf(analysis, points, values, filename, times=None):
         target_alt_values = [point[2] for point in grid]
         rbf = Rbf(lat_values, lon_values, alt_values, values, function=analysis.function)
         interpolated = [rbf(target_lat_values, target_lon_values, target_alt_values)]
+        analysis.value_max = max(interpolated[0])
+        analysis.value_min = min(interpolated[0])
     else:
         analysis.dimension = 4
         time_handler = TimeHandler(times)
@@ -69,6 +71,13 @@ def interpolate_with_rbf(analysis, points, values, filename, times=None):
             target_time_values = [point[3] for point in grids[i]]
             rbf = Rbf(lat_values, lon_values, alt_values, time_values, values, function=analysis.function)
             interpolated.append(rbf(target_lat_values, target_lon_values, target_alt_values, target_time_values))
+        max_values = []
+        min_values = []
+        for i in range(len(interpolated)):
+            max_values.append(max(interpolated[i]))
+            min_values.append(min(interpolated[i]))
+        analysis.value_max = max(max_values)
+        analysis.value_min = min(min_values)
     writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=interpolated)
 
 

@@ -101,8 +101,8 @@ class Reader:
         analysis.set_lat_limits(lat_max, lat_min)
         analysis.set_lon_limits(lon_max, lon_min)
         analysis.set_alt_limits(alt_max, alt_min)
-        analysis.value_max = max(self.values)
-        analysis.value_min = min(self.values)
+        analysis.input_max = max(self.values)
+        analysis.input_min = min(self.values)
 
         lat_values = [(lat - lat_min) / (lat_max - lat_min) for lat in lat_values]
         lon_values = [(lon - lon_min) / (lon_max - lon_min) for lon in lon_values]
@@ -208,7 +208,9 @@ class Writer:
         except ValueError:
             output.write('"time_max":"' + str(analysis.time_max) + '",\n'
                          '"time_min":"' + str(analysis.time_min) + '",\n')
-        output.write('"value_max":"' + str(analysis.value_max) + '",\n'
+        output.write('"input_max":"' + str(analysis.input_max) + '",\n'
+                     '"input_min":"' + str(analysis.input_min) + '",\n'
+                     '"value_max":"' + str(analysis.value_max) + '",\n'
                      '"value_min":"' + str(analysis.value_min) + '"\n}},\n')  # close metadata object
         if len(grids) > 1:
             # for all grids but the last

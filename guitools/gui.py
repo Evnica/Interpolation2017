@@ -561,7 +561,7 @@ class Gui(Frame):
         if self.analysis.time_step is not None:
             temporal_step = str(self.analysis.time_step) + ' seconds\n'
         else:
-            temporal_step = 'N/A (pure spatial interpolation)'
+            temporal_step = 'N/A (pure spatial interpolation)\n'
         return 'File ' + input_for_notification + ' was successfully interpolated ' + 'and saved under :\n' + \
             self.output_file + '\n\nNumber of observations: ' + str(len(self.reader.points)) + '\n' \
             'Latitude: from ' + str(self.analysis.lat_min) + ' to ' + str(self.analysis.lat_max) + '\n' \
@@ -570,7 +570,8 @@ class Gui(Frame):
             'Temporal step: ' + temporal_step +\
             'Spatial density: ' + (str(self.analysis.density) + ' x ')*2 + str(self.analysis.density) + '\n' \
             'Phenomenon: ' + str(self.analysis.phenomenon) + '\n' \
-            'Value: from ' + str(self.analysis.value_min) + ' to ' + str(self.analysis.value_max) + '\n'
+            'Input values: from ' + str(self.analysis.input_min) + ' to ' + str(self.analysis.input_max) + '\n'\
+            'Interpolated values: from ' + str(self.analysis.value_min) + ' to ' + str(self.analysis.value_max) + '\n'
 
     def interpolate(self):
         self.config(cursor='wait')
@@ -582,8 +583,8 @@ class Gui(Frame):
         # get nearest neighbors input
         try:
             nearest_neighbors = int(self.neighbors_spinner.get().strip())
-            if nearest_neighbors > 25:
-                nearest_neighbors = 25  # to maximum
+            if nearest_neighbors > 50:
+                nearest_neighbors = 50  # to maximum
                 self.neighbors_edited = True
         except ValueError:
             nearest_neighbors = 6  # to default

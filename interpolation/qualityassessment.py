@@ -207,8 +207,8 @@ def access_quality_of_interpolation(grouped_samples, one_sample, function='rbf',
                 rbf = Rbf(lat_values, lon_values, alt_values, time_values, known_values, function=function_type)
                 interpolated = rbf(target_lat_values, target_lon_values, target_alt_values, target_time_values)
 
-        for i in range(len(interpolated)):
-            print(interpolated[i], control_values[i])
+        # for i in range(len(interpolated)):
+        #    print(interpolated[i], control_values[i])
         mae.append(mean_absolute_error(interpolated, control_values))
         mse.append(mean_squared_error(interpolated, control_values))
         rmse.append(root_mean_square_error(interpolated, control_values))
