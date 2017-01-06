@@ -88,7 +88,7 @@ class Reader:
                                 self.system_times.append(line_content[time_index])
                 except ValueError:
                     j += 1
-                    print("Not all necessary values are present in the line " + str(i))
+                    # print("Not all necessary values are present in the line " + str(i))
         # print(str(j) + ' lines were not valid')
         file.close()
         lat_max = max(lat_values)
@@ -211,7 +211,8 @@ class Writer:
         output.write('"input_max":"' + str(analysis.input_max) + '",\n'
                      '"input_min":"' + str(analysis.input_min) + '",\n'
                      '"value_max":"' + str(analysis.value_max) + '",\n'
-                     '"value_min":"' + str(analysis.value_min) + '"\n}},\n')  # close metadata object
+                     '"value_min":"' + str(analysis.value_min) + '",\n'
+                     '"within_range":"' + str(analysis.interpolated_within_range) + '"\n}},\n')  # close metadata object
         if len(grids) > 1:
             # for all grids but the last
             for j in range(len(grids) - 1):

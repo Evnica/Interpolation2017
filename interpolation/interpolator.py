@@ -19,6 +19,10 @@ def interpolate_with_idw(analysis, points, values, filename, times=None):
         analysis.value_max = max(interpol)
         analysis.value_min = min(interpol)
         grid_values = [interpol]
+        analysis.interpolated_total, \
+            analysis.interpolated_within_range = calc_num_within_range(values=interpol,
+                                                                       max_value=analysis.input_max,
+                                                                       min_value=analysis.input_min)
     else:
         time_handler = TimeHandler(times)
         points4d = time_handler.raise_to_fourth_dimension(points, 1)
@@ -30,13 +34,13 @@ def interpolate_with_idw(analysis, points, values, filename, times=None):
         for i in range(len(grids)):
             look_for = numpy.asarray(grids[i])
             grid_values.append(tree(analysis.nearest_neighbors, analysis.power, look_for))
-        max_values = []
-        min_values = []
-        for i in range(len(grid_values)):
-            max_values.append(max(grid_values[i]))
-            min_values.append(min(grid_values[i]))
-        analysis.value_max = max(max_values)
-        analysis.value_min = min(min_values)
+        flat_values = [item for sublist in grid_values for item in sublist]
+        analysis.value_max = max(flat_values)
+        analysis.value_min = min(flat_values)
+        analysis.interpolated_total, \
+            analysis.interpolated_within_range = calc_num_within_range(values=flat_values,
+                                                                       max_value=analysis.input_max,
+                                                                       min_value=analysis.input_min)
     writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=grid_values)
 
 
@@ -57,6 +61,10 @@ def interpolate_with_rbf(analysis, points, values, filename, times=None):
         interpolated = [rbf(target_lat_values, target_lon_values, target_alt_values)]
         analysis.value_max = max(interpolated[0])
         analysis.value_min = min(interpolated[0])
+        analysis.interpolated_total, \
+            analysis.interpolated_within_range = calc_num_within_range(values=interpolated[0],
+                                                                       max_value=analysis.input_max,
+                                                                       min_value=analysis.input_min)
     else:
         analysis.dimension = 4
         time_handler = TimeHandler(times)
@@ -71,13 +79,13 @@ def interpolate_with_rbf(analysis, points, values, filename, times=None):
             target_time_values = [point[3] for point in grids[i]]
             rbf = Rbf(lat_values, lon_values, alt_values, time_values, values, function=analysis.function)
             interpolated.append(rbf(target_lat_values, target_lon_values, target_alt_values, target_time_values))
-        max_values = []
-        min_values = []
-        for i in range(len(interpolated)):
-            max_values.append(max(interpolated[i]))
-            min_values.append(min(interpolated[i]))
-        analysis.value_max = max(max_values)
-        analysis.value_min = min(min_values)
+        flat_values = [item for sublist in interpolated for item in sublist]
+        analysis.value_max = max(flat_values)
+        analysis.value_min = min(flat_values)
+        analysis.interpolated_total, \
+            analysis.interpolated_within_range = calc_num_within_range(values=flat_values,
+                                                                       max_value=analysis.input_max,
+                                                                       min_value=analysis.input_min)
     writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=interpolated)
 
 
@@ -160,3 +168,11 @@ class InverseDistanceWeighting:
             interpolation[i] = weighted_value
             i += 1
         return interpolation
+
+
+def calc_num_within_range(values, min_value, max_value):
+    within_range = []
+    for i in range(len(values)):
+        if min_value <= values[i] <= max_value:
+            within_range.append(values[i])
+    return len(values), len(within_range)

@@ -465,7 +465,10 @@ class Gui(Frame):
                                                             one_sample=one_sample, function='rbf',
                                                             function_type=self.analysis.function,
                                                             r2formula='keller')
-                    messagebox.showinfo('Statistics', self.statistics_to_string(mae, mse, rmse, mare, r2))
+                    messagebox.showinfo('Statistics', self.statistics_to_string(mae, mse, rmse, mare, r2,
+                                                                                self.analysis.interpolated_total,
+                                                                                self.analysis.interpolated_within_range)
+                                        )
             self.reader = None
             self.analysis = None
             self.all_edited_parameter_flag_to_false()
@@ -526,12 +529,15 @@ class Gui(Frame):
         self.inform_transformed_to_json(self.csv_converter)
 
     @staticmethod
-    def statistics_to_string(mae, mse, rmse, mare, r2):
+    def statistics_to_string(mae, mse, rmse, mare, r2, num_of_interpolated, num_within_range):
         return 'Mean Absolute Error: ' + format(mae, '.3f') + \
                '\nMean Square Error: ' + format(mse, '.3f') + \
                '\nRoot Mean Square Error: ' + format(rmse, '.3f') + \
                '\nMean Absolute Relative Error: ' + format(mare, '.3f') + \
-               '\nCoefficient of Determination (R^2): ' + format(r2, '.3f')
+               '\nCoefficient of Determination (R^2): ' + format(r2, '.3f') + \
+               '\nInterpolated values within input range:\n' + format((num_within_range/num_of_interpolated*100),
+                                                                      '.2f') + \
+               '% (' + str(num_within_range) + ' of ' + str(num_of_interpolated) + ')'
 
     def inform_transformed_to_json(self, converter):
         input_for_notification = self.extract_filename(self.input_path)
@@ -693,10 +699,6 @@ class Gui(Frame):
                 interpolate_with_rbf(analysis=self.analysis, points=reader.points, values=reader.values,
                                      filename=self.output_file)
         self.config(cursor='')
-
-    def interpolate_with_rbf(self, analysis):
-        # TODO: implement interpolate with RBF
-        return
 
     def inform_parameters_set_to_default(self):
         info = ''
