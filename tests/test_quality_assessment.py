@@ -10,8 +10,8 @@ points3d, values, times = reader(2, 3, 4, 13, 1, analysis)
 # num_of_random_samples, points, values, timestamps, point_dimension=3
 time_handler = TimeHandler(times)
 points4d = time_handler.raise_to_fourth_dimension(points3d=points3d, time_scale=1)
-grouped_samples, one_sample = divide_in_random(num_of_random_samples=10, points=points3d, values=values,
-                                               timestamps=times, point_dimension=3)
+grouped_samples, one_sample = divide_in_random(num_of_random_samples=10, points=points4d, values=values,
+                                               timestamps=times, point_dimension=4)
 
 description = []
 stats_mae = []
@@ -55,7 +55,7 @@ for m in range(len(function_type)):
     stats_r2.append(r2)
     print('Done')
 
-writer = Writer('output/quality_comparison_nov_3d')
+writer = Writer('output/quality_comparison_nov_4d')
 writer.write_quality_comparison(description, stats_mae, stats_mse, stats_rmse, stats_mare, stats_r2)
 print('All done')
 
