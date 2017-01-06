@@ -11,7 +11,7 @@ from interpolation.iohelper import Reader, Writer
 from interpolation.analysis import Analysis
 from interpolation.csvconverter import CsvConverter
 from interpolation.utils import TimeHandler
-from interpolation.utils import divide_in_random
+from interpolation.utils import divide_in_random, info
 
 
 class Gui(Frame):
@@ -96,7 +96,7 @@ class Gui(Frame):
 
         neighbor_spinner_var = StringVar(self)
         neighbor_spinner_var.set('6')
-        self.neighbors_spinner = Spinbox(self.top_frame, from_=2, to=25, width=23, textvariable=neighbor_spinner_var)
+        self.neighbors_spinner = Spinbox(self.top_frame, from_=2, to=50, width=23, textvariable=neighbor_spinner_var)
         self.neighbors_spinner.config(state=DISABLED)
         self.neighbors_spinner.grid(row=7, column=2, sticky=W, padx=(5, 0))
 
@@ -168,13 +168,13 @@ class Gui(Frame):
 
         temporal_step_label = Label(self.param_frame, text='Temporal Density')
         temporal_step_label.grid(row=2, column=0, sticky=E, padx=(5, 1))
-        self.temporal_step_spinner = Spinbox(self.param_frame, from_=1, to=86400, width=18)
+        self.temporal_step_spinner = Spinbox(self.param_frame, from_=2, to=86400, width=18)
         self.temporal_step_spinner.grid(row=2, column=1, padx=(10, 0), sticky=W)
         self.temporal_step_spinner.config(state=DISABLED)
 
         self.param_frame.grid(row=11, column=2, columnspan=2, rowspan=3)
 
-        self.info_button = Button(self.top_frame, text="About...")
+        self.info_button = Button(self.top_frame, text="About...", command=self.info)
         self.info_button.grid(row=15, column=0, pady=(15, 0), columnspan=2, sticky=W)
 
         self.calc_button = Button(self.top_frame, text="Execute", width=20, command=self.execute)
@@ -270,8 +270,7 @@ class Gui(Frame):
 
     def browse(self):
         self.input_path = filedialog.askopenfilename(defaultextension='.csv',
-                                                     filetypes=[('Comma Separated Value Files', '*.csv'),
-                                                                ('Text Files', '*.txt')])
+                                                     filetypes=[('Comma Separated Value Files', '*.csv')])
         self.set_text(self.input_file_path_entry, self.input_path)
         if self.suitable_file_chosen():
             values = []
@@ -327,7 +326,9 @@ class Gui(Frame):
             self.calc_button.config(state=DISABLED)
 
     def save(self):
-        self.output_file = filedialog.asksaveasfilename(defaultextension='.json')
+        self.output_file = filedialog.asksaveasfilename(defaultextension='.json',
+                                                        filetypes=[('JavaScript Object Notation', '*.json'),
+                                                                   ('All files', '*.*')])
         if self.output_file is None:
             return
         else:
@@ -427,8 +428,11 @@ class Gui(Frame):
             show_statistics = None
             if self.initial_to_json_checked.get() == 1 and self.interpolate_checked.get() == 1:
                 self.transform_initial()
+                messagebox.showinfo('Converted to JSON', self.inform_transformed_to_json(self.csv_converter))
                 self.interpolate()
-                # TODO: inform of completion
+                message = self.inform_interpolated() + '\n' + self.inform_parameters_set_to_default() + \
+                          '\n' + 'Do you want to calculate interpolation error? '
+                show_statistics = messagebox.askyesno('Interpolated', message)
             elif self.initial_to_json_checked.get() == 1:
                 self.transform_initial()
                 messagebox.showinfo('Converted to JSON', self.inform_transformed_to_json(self.csv_converter))
@@ -569,7 +573,7 @@ class Gui(Frame):
         else:
             temporal_step = 'N/A (pure spatial interpolation)\n'
         return 'File ' + input_for_notification + ' was successfully interpolated ' + 'and saved under :\n' + \
-            self.output_file + '\n\nNumber of observations: ' + str(len(self.reader.points)) + '\n' \
+            self.output_file + '\n\nNumber of non-duplicate observations: ' + str(len(self.reader.points)) + '\n' \
             'Latitude: from ' + str(self.analysis.lat_min) + ' to ' + str(self.analysis.lat_max) + '\n' \
             'Longitude: from ' + str(self.analysis.lon_min) + ' to ' + str(self.analysis.lon_max) + '\n' \
             'Altitude: from ' + str(self.analysis.alt_min) + ' to ' + str(self.analysis.alt_max) + '\n' + dates + \
@@ -724,6 +728,9 @@ class Gui(Frame):
     def extract_filename(path):
         head, tail = ntpath.split(path)
         return tail or ntpath.basename(head)
+
+    def info(self):
+        messagebox.showinfo(title='About the tool', message=info())
 
 
 def start():

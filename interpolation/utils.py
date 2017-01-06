@@ -89,3 +89,37 @@ def divide_in_random(num_of_random_samples, points, values, timestamps, point_di
         last_sample[i][1] = values[i]
         last_sample[i][2] = timestamps[i]
     return random_samples, last_sample
+
+
+def info():
+    return 'The Spatio-Temporal Interpolation tool interpolates weather observation data given in CSV format and ' \
+           'saves interpolated data as a JSON file suitable for further visualization. The coordinates are normalized' \
+           ' for interpolation and do not require homogeneity.\n' + \
+           'You can choose from the following interpolation options:\n' + \
+           '1. Spatial Inverse Distance Weighting Interpolation\n' + \
+           '  - number of nearest neighbors for interpolation: from 2 to 50\n' + \
+           '  - power: from 1 to 3\n' + \
+           '  - spatial density: from 1 to 50 points for cube side\n' + \
+           '2. Spatial Radial Basis Functions\n' + \
+           '  - cubic (the less accurate of given functions)\n' + \
+           '  - linear\n' + \
+           '  - thin plate\n' + \
+           '3, 4. Spatio-temporal IDW and RBF\n' + \
+           '  - temporal step in seconds\n' + \
+           '  - min - 2 second, max - interval between the first and the last measurement in the dataset\n' + \
+            'NOTES:\n' + \
+            '1. Interpolation with high temporal/spatial density will ' \
+            'result in long processing times and very large output files. E.g. for a dataset with an input time ' \
+            'interval of less than 1.5 hours interpolation with a density of 10 points per cube side and a temporal ' \
+            'step of 30 seconds will result in 180 000 points (180 cubes with 1000 points each). The output JSON file' \
+            ' size will make up about 11 Mb.\n' \
+            '2. After interpolation is done, the quality of chosen interpolation method can be tested by means of ' \
+            'tenfold cross validation. For big input datasets statistical evaluation of interpolation method quality ' \
+            'can take a while.\n' \
+            '3. The tool also converts input data in the JSON format. This can be done as a separate task or ' \
+            'together with interpolation. Dataset description is provided in an info window upon completion as ' \
+            'well as in the metadata of the output JSON file.\n' \
+            '4. Output file name is a must only in case of interpolation. Input data converted into JSON, if ' \
+            'done simultaneously with interpolation, is stored in the same folder as interpolation results. If ' \
+            'done separately, it is stored under a chosen path or in the default output folder.\n\n' \
+            '(c)Evnica, 2017'
