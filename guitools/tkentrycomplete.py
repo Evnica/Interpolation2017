@@ -8,8 +8,6 @@ Updated by Russell Adams, 2011/01/24 to support Python 3 and Combobox.
 Updated by Dominic Kexel to use Tkinter and ttk instead of tkinter and tkinter.ttk
    Licensed same as original (not specified?), or public domain, whichever is less restrictive.
 """
-import sys
-import os
 from tkinter import *
 from tkinter import ttk
 

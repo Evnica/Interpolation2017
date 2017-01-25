@@ -4,14 +4,14 @@ from interpolation.analysis import Analysis
 from interpolation.utils import divide_in_random, TimeHandler
 
 print('Start')
-reader = Reader('input/wetter_nov.csv')
+reader = Reader('input/wetter.csv')
 analysis = Analysis(None, 20)
 points3d, values, times = reader(2, 3, 4, 14, 1, analysis)
 # num_of_random_samples, points, values, timestamps, point_dimension=3
 time_handler = TimeHandler(times)
-points4d = time_handler.raise_to_fourth_dimension(points3d=points3d, time_scale=1)
-grouped_samples, one_sample = divide_in_random(num_of_random_samples=10, points=points4d, values=values,
-                                               timestamps=times, point_dimension=4)
+# points4d = time_handler.raise_to_fourth_dimension(points3d=points3d, time_scale=1)
+grouped_samples, one_sample = divide_in_random(num_of_random_samples=10, points=points3d, values=values,
+                                               timestamps=times, point_dimension=3)
 
 description = []
 stats_mae = []
@@ -21,8 +21,8 @@ stats_mare = []
 stats_r2 = []
 
 function_type = ['thin_plate', 'cubic', 'linear', 'inverse', 'quintic', 'multiquadric', 'gaussian']
-neighbors = [2, 4, 6, 8, 10, 20, 25, 50, 100]  # [2, 4, 6, 8, 10, 20, 25]
-powers = [1, 1.5, 2, 2.5, 5, 10]  # [1, 2, 3]
+neighbors = [6, 8, 10, 20, 25, 50]  # [2, 4, 6, 8, 10, 20, 25]
+powers = [1, 2, 3]  # [1, 2, 3]
 
 for j in range(len(neighbors)):
     for k in range(len(powers)):
@@ -55,7 +55,7 @@ for m in range(len(function_type)):
     stats_r2.append(r2)
     print('Done')
 
-writer = Writer('output/quality_comparison_st_4d_jul')
+writer = Writer('output/quality_comparison_press_3d_jul')
 writer.write_quality_comparison(description, stats_mae, stats_mse, stats_rmse, stats_mare, stats_r2)
 print('All done')
 

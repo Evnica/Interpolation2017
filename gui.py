@@ -42,7 +42,7 @@ class Gui(Frame):
         available_methods = InterpolationMethod.as_string_sequence()
         self.interpolation_methods_combo = AutocompleteCombobox(self.top_frame, width=47)
         self.interpolation_methods_combo.set_completion_list(available_methods)
-        self.interpolation_methods_combo.focus_set()
+        # self.interpolation_methods_combo.focus_set()
         self.interpolation_methods_combo.set(available_methods[0])
         self.interpolation_methods_combo.bind("<<ComboboxSelected>>", self.change_in_interpolation_combo)
         self.interpolation_methods_combo.grid(row=0, column=1, columnspan=2, padx=(10, 0), sticky=W)
@@ -54,6 +54,7 @@ class Gui(Frame):
         self.input_file_path_entry.grid(row=1, column=1, columnspan=2, padx=(10, 0), sticky=W)
         input_file_browse_btn = Button(self.top_frame, text="Browse...", command=self.browse)
         input_file_browse_btn.grid(row=1, column=3, padx=(9, 0))
+        input_file_browse_btn.focus_set()
 
         # row 2: Checkbox for input data transformation in JSON
         self.checkbox_transform_input = Checkbutton(self.top_frame, text="Transform input data to JSON",

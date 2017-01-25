@@ -13,12 +13,12 @@ measurements3d = go.Scatter3d(
     mode='lines+markers',
     marker=dict(
         size=3,
-        color=numpy.asarray(plotter.temp_values),
-        colorscale='Picnic',
+        color=numpy.asarray(plotter.press_values),
+        colorscale='Portland',
         opacity=0.8,
         showscale=True
     ),
-    line=dict(color=numpy.asarray(plotter.temp_values), colorscale='Picnic', width=1)
+    line=dict(color=numpy.asarray(plotter.press_values), colorscale='Portland', width=1)
 )
 
 layout = go.Layout(
