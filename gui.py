@@ -684,7 +684,7 @@ class Gui(Frame):
                 temporal_step = self.max_temporal_step  # to illustrate change, it has to be at least 2 cubes
                 self.temporal_step_edited = True
             try:
-                self.timescale = int(self.timescale_spinner.get())
+                self.timescale = float(self.timescale_spinner.get())
             except ValueError:
                 self.timescale = 1
                 self.timescale_edited = True
