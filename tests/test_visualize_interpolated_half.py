@@ -20,11 +20,11 @@ points, temps, times = helper(2, 3, 4, 14, 1, analysis)
 input_max = analysis.input_max
 input_min = analysis.input_min
 time_handler = TimeHandler(times)
-points4d = time_handler.raise_to_fourth_dimension(points3d=points, time_scale=4.5)
+points4d = time_handler.raise_to_fourth_dimension(points3d=points, time_scale=4.8)
 print(analysis.input_min)
 print(analysis.input_max)
 grid = analysis.generate_grid()
-analysis = Analysis(900, density)
+analysis = Analysis(906, density)
 grids = analysis.generate_time_series_grids(times)
 current = numpy.asarray(points)
 values = numpy.asarray(temps)
