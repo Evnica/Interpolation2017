@@ -67,13 +67,15 @@ class Analysis:
         self.time_min = time_min
 
     def generate_grid(self):
-        step = 1 / self.density
+        step = round(1 / self.density, 5)
+        half_step = round(step / 2, 5)
         getcontext().prec = 8
         grid = []
         for i in range(self.density):
             for j in range(self.density):
                 for k in range(self.density):
-                    grid.append([k * step + step / 2, j * step + step / 2, i * step + step / 2])
+                    grid.append([round((k * step + half_step), 5), round((j * step + half_step), 5),
+                                 round((i * step + half_step), 5)])
         return grid
 
     def generate_time_series_grids(self, timestamps):
