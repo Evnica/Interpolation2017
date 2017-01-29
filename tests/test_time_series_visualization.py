@@ -42,7 +42,7 @@ for i in range(len(grids)):
     target_alt_values = [point[2] for point in look_for]
     rbf = Rbf(lat_values, lon_values, alt_values, values, function='cubic')
     interpolated = rbf(target_lat_values, target_lon_values, target_alt_values)
-    grid_values.append(tree(analysis.nearest_neighbors, analysis.power, look_for))
+    grid_values.append(interpolated)
     measurements3d = go.Scatter3d(
         x=target_lon_values,
         y=target_lat_values,

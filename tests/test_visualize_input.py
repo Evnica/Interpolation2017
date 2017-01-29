@@ -3,7 +3,7 @@ import plotly.graph_objs as go
 import numpy
 from interpolation.csvconverter import CsvConverter
 
-plotter = CsvConverter('input/wetter.csv')
+plotter = CsvConverter('input/wetter_nov1.csv')
 plotter(1, 2, 3, 4, 13, 15, 14)
 
 measurements3d = go.Scatter3d(

@@ -122,7 +122,6 @@ def access_quality_of_interpolation(grouped_samples, one_sample, function='rbf',
         # nearest_neighbors, epsilon, power, unknown_locations, weights
         interpolated = idw(number_of_neighbors, power, numpy.asarray(query_locations))
     else:
-
         lat_values = [point[0] for point in known_locations]
         lon_values = [point[1] for point in known_locations]
         alt_values = [point[2] for point in known_locations]
