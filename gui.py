@@ -174,9 +174,12 @@ class Gui(Frame):
         self.temporal_step_spinner = Spinbox(self.param_frame, from_=2, to=86400, width=18)
         self.temporal_step_spinner.grid(row=2, column=1, padx=(10, 0), sticky=W)
         self.temporal_step_spinner.config(state=DISABLED)
+
+        timescale_spinner_var = StringVar(self)
+        timescale_spinner_var.set('1')
         timescale_label = Label(self.param_frame, text='Time Scale')
         timescale_label.grid(row=3, column=0, sticky=E, padx=(5, 1))
-        self.timescale_spinner = Spinbox(self.param_frame, from_=0, to=100000, width=18)
+        self.timescale_spinner = Spinbox(self.param_frame, from_=0, to=1000, width=18, textvariable=timescale_spinner_var)
         self.timescale_spinner.grid(row=3, column=1, padx=(10, 0), sticky=W)
         self.timescale_spinner.config(state=DISABLED)
 
