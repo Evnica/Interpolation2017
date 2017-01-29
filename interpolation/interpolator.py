@@ -6,7 +6,7 @@ from interpolation.utils import TimeHandler
 import numpy
 
 
-def interpolate_with_idw(analysis, points, values, filename, times=None):
+def interpolate_with_idw(analysis, points, values, filename, times=None, timescale=1):
     writer = Writer(filename)
     if times is None:
         grid = analysis.generate_grid()
@@ -25,7 +25,7 @@ def interpolate_with_idw(analysis, points, values, filename, times=None):
                                                                        min_value=analysis.input_min)
     else:
         time_handler = TimeHandler(times)
-        points4d = time_handler.raise_to_fourth_dimension(points, 1)
+        points4d = time_handler.raise_to_fourth_dimension(points, timescale)
         grids = analysis.generate_time_series_grids(times)
         current = numpy.asarray(points4d)
         values = numpy.asarray(values)
@@ -44,7 +44,7 @@ def interpolate_with_idw(analysis, points, values, filename, times=None):
     writer.write_time_series_grids_to_json(analysis=analysis, grids=grids, grid_values=grid_values)
 
 
-def interpolate_with_rbf(analysis, points, values, filename, times=None):
+def interpolate_with_rbf(analysis, points, values, filename, times=None, timescale=1):
     writer = Writer(filename)
     lat_values = [point[0] for point in points]
     lon_values = [point[1] for point in points]
@@ -68,7 +68,7 @@ def interpolate_with_rbf(analysis, points, values, filename, times=None):
     else:
         analysis.dimension = 4
         time_handler = TimeHandler(times)
-        points4d = time_handler.raise_to_fourth_dimension(points3d=points, time_scale=1)
+        points4d = time_handler.raise_to_fourth_dimension(points3d=points, time_scale=timescale)
         time_values = [point[3] for point in points4d]
         grids = analysis.generate_time_series_grids(times)
         interpolated = []

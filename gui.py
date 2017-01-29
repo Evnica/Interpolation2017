@@ -32,6 +32,8 @@ class Gui(Frame):
         self.power_edited = False
         self.density_edited = False
         self.temporal_step_edited = False
+        self.timescale = 1
+        self.timescale_edited = False
 
         # top frame with all options, but no control buttons
         self.top_frame = Frame(self, padx=20, pady=20)
@@ -172,8 +174,13 @@ class Gui(Frame):
         self.temporal_step_spinner = Spinbox(self.param_frame, from_=2, to=86400, width=18)
         self.temporal_step_spinner.grid(row=2, column=1, padx=(10, 0), sticky=W)
         self.temporal_step_spinner.config(state=DISABLED)
+        timescale_label = Label(self.param_frame, text='Time Scale')
+        timescale_label.grid(row=3, column=0, sticky=E, padx=(5, 1))
+        self.timescale_spinner = Spinbox(self.param_frame, from_=0, to=100000, width=18)
+        self.timescale_spinner.grid(row=3, column=1, padx=(10, 0), sticky=W)
+        self.timescale_spinner.config(state=DISABLED)
 
-        self.param_frame.grid(row=11, column=2, columnspan=2, rowspan=3)
+        self.param_frame.grid(row=11, column=2, columnspan=2, rowspan=4)
 
         self.info_button = Button(self.top_frame, text="About...", command=self.info)
         self.info_button.grid(row=15, column=0, pady=(15, 0), columnspan=2, sticky=W)
@@ -356,6 +363,7 @@ class Gui(Frame):
         self.time_combo.config(state=ACTIVE)
         self.density_spinner.config(state=NORMAL)
         self.temporal_step_spinner.config(state=DISABLED)
+        self.timescale_spinner.config(state=DISABLED)
         self.calc_button.config(state=ACTIVE)
 
     def spatio_temporal_idw_state(self):
@@ -369,6 +377,7 @@ class Gui(Frame):
         self.time_combo.config(state=ACTIVE)
         self.density_spinner.config(state=NORMAL)
         self.temporal_step_spinner.config(state=NORMAL)
+        self.timescale_spinner.config(state=NORMAL)
         self.calc_button.config(state=ACTIVE)
 
     def spatio_temporal_rbf_state(self):
@@ -382,6 +391,7 @@ class Gui(Frame):
         self.time_combo.config(state=ACTIVE)
         self.density_spinner.config(state=NORMAL)
         self.temporal_step_spinner.config(state=NORMAL)
+        self.timescale_spinner.config(state=NORMAL)
         self.calc_button.config(state=ACTIVE)
 
     def spatial_rbf_state(self):
@@ -395,6 +405,7 @@ class Gui(Frame):
         self.time_combo.config(state=ACTIVE)
         self.density_spinner.config(state=NORMAL)
         self.temporal_step_spinner.config(state=DISABLED)
+        self.timescale_spinner.config(state=DISABLED)
         self.calc_button.config(state=ACTIVE)
 
     def input_to_json_on(self):
@@ -421,6 +432,7 @@ class Gui(Frame):
         self.time_combo.config(state=DISABLED)
         self.density_spinner.config(state=DISABLED)
         self.temporal_step_spinner.config(state=DISABLED)
+        self.timescale_spinner.config(state=DISABLED)
         if self.initial_to_json_checked.get() == 0:
             self.calc_button.config(state=DISABLED)
 
@@ -453,7 +465,8 @@ class Gui(Frame):
                                                                        self.reader.values, times)
                     else:
                         time_handler = TimeHandler(times)
-                        points4d = time_handler.raise_to_fourth_dimension(points3d=self.reader.points, time_scale=1)
+                        points4d = time_handler.raise_to_fourth_dimension\
+                            (points3d=self.reader.points, time_scale=self.timescale)
                         grouped_samples, one_sample = divide_in_random(num_of_random_samples=10, points=points4d,
                                                                        values=self.reader.values, timestamps=times,
                                                                        point_dimension=4)
@@ -670,6 +683,11 @@ class Gui(Frame):
             except ValueError:
                 temporal_step = self.max_temporal_step  # to illustrate change, it has to be at least 2 cubes
                 self.temporal_step_edited = True
+            try:
+                self.timescale = int(self.timescale_spinner.get())
+            except ValueError:
+                self.timescale = 1
+                self.timescale_edited = True
             self.analysis = Analysis(temporal_step, spatial_density)
             self.analysis.nearest_neighbors = nearest_neighbors
             self.analysis.power = power
@@ -683,11 +701,11 @@ class Gui(Frame):
             if 'IDW' in function:
                 self.analysis.interpolation_method = 'idw'
                 interpolate_with_idw(analysis=self.analysis, points=reader.points, values=reader.values,
-                                     filename=self.output_file, times=times)
+                                     filename=self.output_file, times=times, timescale=self.timescale)
             else:  # RBF
                 self.analysis.interpolation_method = 'rbf'
                 interpolate_with_rbf(analysis=self.analysis, points=reader.points, values=reader.values,
-                                     filename=self.output_file, times=times)
+                                     filename=self.output_file, times=times, timescale=self.timescale)
         else:  # pure spatial interpolation
             self.analysis = Analysis(None, spatial_density)
             self.analysis.nearest_neighbors = nearest_neighbors
@@ -706,24 +724,28 @@ class Gui(Frame):
         self.config(cursor='')
 
     def inform_parameters_set_to_default(self):
-        info = ''
-        if self.neighbors_edited or self.power_edited or self.density_edited or self.temporal_step_edited:
-            info = 'Changes in interpolation parameters due to illegal input values:\n'
+        info_to_default = ''
+        if self.neighbors_edited or self.power_edited or self.density_edited or self.temporal_step_edited \
+                or self.timescale_edited:
+            info_to_default = 'One or more parameters set to default due to illegal input values:\n'
             if self.neighbors_edited:
-                info += 'Number of nearest neighbors: ' + str(self.analysis.nearest_neighbors) + '\n'
+                info_to_default += 'Number of nearest neighbors: ' + str(self.analysis.nearest_neighbors) + '\n'
             if self.power_edited:
-                info += 'Power: ' + str(self.analysis.power) + '\n'
+                info_to_default += 'Power: ' + str(self.analysis.power) + '\n'
             if self.density_edited:
-                info += 'Spatial density: ' + str(self.analysis.density) + '\n'
+                info_to_default += 'Spatial density: ' + str(self.analysis.density) + '\n'
             if self.temporal_step_edited:
-                info += 'Temporal step: ' + str(self.analysis.time_step)
-        return info
+                info_to_default += 'Temporal step: ' + str(self.analysis.time_step) + '\n'
+            if self.timescale_edited:
+                info_to_default += 'Timescale: 1'
+        return info_to_default
 
     def all_edited_parameter_flag_to_false(self):
         self.neighbors_edited = False
         self.power_edited = False
         self.density_edited = False
         self.temporal_step_edited = False
+        self.timescale_edited = False
 
     @staticmethod
     def extract_filename(path):
